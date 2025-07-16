@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Building2, Mail, Phone, Users, X, Search } from 'lucide-react';
+import { LogOut, Plus, Building2, Mail, Phone, Users, X, Search, Clock } from 'lucide-react';
+import { authService } from '../utils/auth';
+import { Supplier } from '../utils/types';
 
 interface Business {
   id: string;
@@ -13,6 +15,10 @@ interface Business {
   createdAt?: string;
 }
 
+interface DataResponse {
+  Data: Supplier[];
+}
+
 interface AdminDashboardProps {
   onLogout: () => void;
 }
@@ -23,6 +29,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sessionTime, setSessionTime] = useState(0);
   const [newBusiness, setNewBusiness] = useState({
     companyName: '',
     contactName: '',
@@ -36,12 +43,34 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     fetchBusinesses();
   }, []);
 
+  // Session timer effect
+  useEffect(() => {
+    const updateSessionTime = () => {
+      const remainingTime = authService.getRemainingTime();
+      setSessionTime(remainingTime);
+      
+      // Auto logout when session expires
+      if (remainingTime === 0) {
+        alert('Your session has expired. Please log in again.');
+        onLogout();
+      }
+    };
+
+    // Update immediately
+    updateSessionTime();
+    
+    // Update every minute
+    const interval = setInterval(updateSessionTime, 60000);
+    
+    return () => clearInterval(interval);
+  }, [onLogout]);
+
   const fetchBusinesses = async () => {
     const urlencoded = new URLSearchParams();
     urlencoded.append("supplier_name", "");
     try {
       setLoading(true);
-      const response = await fetch('https://aswinno.assetwise.co.th/APIUAT/api/Suplier/GetSuplier', {
+      const response = await fetch('/api/Suplier/GetSuplier', {
         method: 'POST',
         headers: {
           'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
@@ -54,19 +83,19 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         throw new Error('Failed to fetch businesses');
       }
       
-      const data = await response.json();
+      const data: DataResponse = await response.json();
       
       // Transform API data to match our interface
-      const transformedData = Array.isArray(data) ? data.map((item: any, index: number) => ({
-        id: item.id || `business-${index}`,
-        companyName: item.companyName || item.name || 'N/A',
-        contactName: item.contactName || item.contact || 'N/A',
+      const transformedData = Array.isArray(data.Data) ? data.Data.map((item: Supplier, index: number) => ({
+        id: item.uid || `business-${index}`,
+        companyName: item.supplier_name || 'N/A',
+        contactName: item.sales_person || 'N/A',
         email: item.email || 'N/A',
-        phone: item.phone || item.phoneNumber || 'N/A',
-        employees: item.employees || item.employeeCount || 'N/A',
-        industry: item.industry || item.sector || 'N/A',
-        status: item.status || 'Active',
-        createdAt: item.createdAt || new Date().toISOString()
+        phone: item.telephone || 'N/A',
+        employees: item.head_count.toString() || 'N/A',
+        industry: item.business_type || 'N/A',
+        status: item.StatusList[0].name || 'Active',
+        createdAt: item.contact_date || new Date().toISOString()
       })) : [];
       
       setBusinesses(transformedData);
@@ -124,13 +153,35 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <Building2 className="h-8 w-8 text-[#123F6D]" />
               <h1 className="text-2xl font-bold text-[#123F6D]">Admin Dashboard</h1>
             </div>
-            <button
-              onClick={onLogout}
-              className="flex items-center space-x-2 text-gray-600 hover:text-[#123F6D] transition-colors"
-            >
-              <LogOut className="h-5 w-5" />
-              <span>Logout</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              {/* Session Timer */}
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm">
+                  {sessionTime > 0 ? `${sessionTime}m left` : 'Expired'}
+                </span>
+                {sessionTime > 0 && sessionTime < 10 && (
+                  <button
+                    onClick={() => {
+                      if (authService.extendSession()) {
+                        setSessionTime(60);
+                        alert('Session extended by 1 hour');
+                      }
+                    }}
+                    className="ml-2 text-xs bg-[#F1683B] hover:bg-[#e5572f] text-white px-2 py-1 rounded"
+                  >
+                    Extend
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={onLogout}
+                className="flex items-center space-x-2 text-gray-600 hover:text-[#123F6D] transition-colors"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
