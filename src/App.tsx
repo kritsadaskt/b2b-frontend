@@ -4,10 +4,15 @@ import { Search, Building2, Users, CheckCircle, ArrowRight, Mail, Phone, MapPin 
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import { authService } from './utils/auth';
+import { useGetData } from './hooks/getData';
+import { Supplier } from './utils/types';
+import Footer from './components/Footer';
 
 function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<string | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [businessForm, setBusinessForm] = useState({
     companyName: '',
     contactName: '',
@@ -16,15 +21,72 @@ function HomePage() {
     employees: '',
     industry: ''
   });
+  const { data: availableCompanies, loading, error } = useGetData(searchQuery);
+
+  // Filter companies based on search query
+  const filteredCompanies = availableCompanies.filter((company: Supplier) =>
+    company.supplier_name.toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 10); // Limit to 10 suggestions
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setShowDropdown(value.length > 0);
+    setSelectedIndex(-1);
+    setSearchResult(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown || filteredCompanies.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < filteredCompanies.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0) {
+          selectCompany(filteredCompanies[selectedIndex].supplier_name);
+        } else {
+          handleSearch(e as any);
+        }
+        break;
+      case 'Escape':
+        setShowDropdown(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  };
+
+  const selectCompany = (companyName: string) => {
+    setSearchQuery(companyName);
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+    // Automatically trigger search when company is selected
+    const isAvailable = availableCompanies.some((company: Supplier) => 
+      company.supplier_name.toLowerCase() === companyName.toLowerCase()
+    );
+    setSearchResult(isAvailable ? 'available' : 'not-available');
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowDropdown(false);
     if (searchQuery.trim()) {
       // Simulate search result
-      const availableCompanies = ['Microsoft', 'Google', 'Apple', 'Amazon', 'Meta', 'Tesla', 'Netflix'];
-      const isAvailable = availableCompanies.some(company => 
-        company.toLowerCase().includes(searchQuery.toLowerCase())
+      const isAvailable = availableCompanies.some((company: Supplier) => 
+        company.supplier_name.toLowerCase().includes(searchQuery.toLowerCase())
       );
+
+      console.log(availableCompanies);
+      
       setSearchResult(isAvailable ? 'available' : 'not-available');
     }
   };
@@ -82,13 +144,12 @@ function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Building2 className="h-8 w-8 text-[#123F6D]" />
-              <h1 className="text-2xl font-bold text-[#123F6D]">Assetwise B2B Service</h1>
+              <img src="/images/logo-hr-02.svg" alt="Assetwise" width={180} height={80} className="object-contain" />
             </div>
             <nav className="hidden md:flex space-x-8">
-              <a href="#search" className="text-gray-600 hover:text-[#123F6D] transition-colors">Search</a>
-              <a href="#services" className="text-gray-600 hover:text-[#123F6D] transition-colors">Services</a>
-              <a href="#partner" className="text-gray-600 hover:text-[#123F6D] transition-colors">Become Partner</a>
+              <a href="#search" className="text-gray-600 hover:text-[#123F6D] transition-colors">ค้นหา</a>
+              <a href="#services" className="text-gray-600 hover:text-[#123F6D] transition-colors">บริการ</a>
+              <a href="#partner" className="text-gray-600 hover:text-[#123F6D] transition-colors">สมัครเป็นพาร์ทเนอร์</a>
             </nav>
           </div>
         </div>
@@ -98,18 +159,18 @@ function HomePage() {
       <section className="bg-gradient-to-br from-[#123F6D] to-[#1a5591] text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Premium Financial Services
-            <span className="block text-[#F1683B]">For Your Business</span>
+            GET YOUR EMPLOYEES
+            <span className="block text-[#F1683B]">BENEFITS</span>
           </h2>
           <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-            Exclusive discounts and tailored financial solutions for employees of partner companies
+            Exclusive discounts for employees of partner companies
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#search" className="bg-[#F1683B] hover:bg-[#e5572f] text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
-              Check Availability
+            <a href="#search" className="bg-[#F1683B] hover:bg-[#e5572f] text-white px-8 py-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-105">
+              ตรวจสอบสิทธิ์
             </a>
-            <a href="#partner" className="bg-transparent border-2 border-white hover:bg-white hover:text-[#123F6D] text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300">
-              Partner With Us
+            <a href="#partner" className="bg-transparent border-2 border-white hover:bg-white hover:text-[#123F6D] text-white px-8 py-4 rounded-lg font-medium transition-all duration-300">
+              สมัครเป็นพาร์ทเนอร์
             </a>
           </div>
         </div>
@@ -120,10 +181,10 @@ function HomePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h3 className="text-3xl md:text-4xl font-bold text-[#123F6D] mb-4">
-              Check Service Availability
+              ตรวจสอบสิทธิ์
             </h3>
             <p className="text-lg text-gray-600">
-              Enter your company name to see if we offer services to your employees
+              กรอกชื่อบริษัทเพื่อตรวจสอบสิทธิ์ของพนักงาน
             </p>
           </div>
 
@@ -133,17 +194,43 @@ function HomePage() {
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
                   type="text"
-                  placeholder="Enter company or business name..."
+                  placeholder="กรอกชื่อบริษัท..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                  onFocus={() => searchQuery.length > 0 && setShowDropdown(true)}
                   className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent text-lg"
                 />
+                                 {showDropdown && filteredCompanies.length > 0 && (
+                   <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                     {filteredCompanies.map((company, index) => (
+                       <li
+                         key={company.uid}
+                         className={`p-3 cursor-pointer hover:bg-gray-100 ${
+                           index === selectedIndex ? 'bg-gray-100 font-semibold' : ''
+                         }`}
+                         onMouseDown={(e) => {
+                           e.preventDefault(); // Prevent blur from firing
+                           selectCompany(company.supplier_name);
+                           console.log(company.supplier_name);
+                         }}
+                         onClick={() => {
+                           selectCompany(company.supplier_name);
+                           console.log(company.supplier_name);
+                         }}
+                       >
+                         {company.supplier_name}
+                       </li>
+                     ))}
+                   </ul>
+                 )}
               </div>
               <button
                 type="submit"
                 className="bg-[#123F6D] hover:bg-[#0f2f54] text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2"
               >
-                <span>Search</span>
+                <span>ตรวจสอบสิทธิ์</span>
                 <ArrowRight className="h-5 w-5" />
               </button>
             </div>
@@ -179,7 +266,7 @@ function HomePage() {
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-20">
+      <section id="services" className="py-20 hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl font-bold text-[#123F6D] mb-4">
@@ -243,7 +330,7 @@ function HomePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h3 className="text-3xl md:text-4xl font-bold text-[#123F6D] mb-4">
-              Become a Partner
+              สมัครเป็นพาร์ทเนอร์กับ AssetWise
             </h3>
             <p className="text-lg text-gray-600">
               Submit your business information to discuss partnership opportunities and employee benefits
@@ -255,7 +342,7 @@ function HomePage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Company Name *
+                    ชื่อบริษัท *
                   </label>
                   <input
                     type="text"
@@ -263,12 +350,12 @@ function HomePage() {
                     value={businessForm.companyName}
                     onChange={(e) => setBusinessForm({...businessForm, companyName: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="Enter company name"
+                    placeholder="กรอกชื่อบริษัท"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Contact Name *
+                    ชื่อผู้ติดต่อ *
                   </label>
                   <input
                     type="text"
@@ -276,7 +363,7 @@ function HomePage() {
                     value={businessForm.contactName}
                     onChange={(e) => setBusinessForm({...businessForm, contactName: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="Your full name"
+                    placeholder="กรอกชื่อผู้ติดต่อ"
                   />
                 </div>
               </div>
@@ -284,7 +371,7 @@ function HomePage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email Address *
+                    อีเมล *
                   </label>
                   <input
                     type="email"
@@ -292,19 +379,19 @@ function HomePage() {
                     value={businessForm.email}
                     onChange={(e) => setBusinessForm({...businessForm, email: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="contact@company.com"
+                    placeholder="กรอกอีเมล"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Phone Number
+                    หมายเลขโทรศัพท์
                   </label>
                   <input
                     type="tel"
                     value={businessForm.phone}
                     onChange={(e) => setBusinessForm({...businessForm, phone: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="(555) 123-4567"
+                    placeholder="กรอกหมายเลขโทรศัพท์"
                   />
                 </div>
               </div>
@@ -312,31 +399,31 @@ function HomePage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Number of Employees
+                    จำนวนพนักงาน
                   </label>
                   <select
                     value={businessForm.employees}
                     onChange={(e) => setBusinessForm({...businessForm, employees: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   >
-                    <option value="">Select range</option>
-                    <option value="1-10">1-10 employees</option>
-                    <option value="11-50">11-50 employees</option>
-                    <option value="51-200">51-200 employees</option>
-                    <option value="201-1000">201-1000 employees</option>
-                    <option value="1000+">1000+ employees</option>
+                    <option value="">เลือกช่วง</option>
+                    <option value="1-10">1-10 คน</option>
+                    <option value="11-50">11-50 คน</option>
+                    <option value="51-200">51-200 คน</option>
+                    <option value="201-1000">201-1000 คน</option>
+                    <option value="1000+">1000+ คน</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Industry
+                    กลุ่มธุรกิจ
                   </label>
                   <input
                     type="text"
                     value={businessForm.industry}
                     onChange={(e) => setBusinessForm({...businessForm, industry: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="e.g., Technology, Healthcare, Finance"
+                    placeholder="เช่น ประกันชีวิต, ธนาคาร ฯลฯ"
                   />
                 </div>
               </div>
@@ -345,7 +432,7 @@ function HomePage() {
                 type="submit"
                 className="w-full bg-[#F1683B] hover:bg-[#e5572f] text-white py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02]"
               >
-                Submit Partnership Request
+                ส่งข้อมูล
               </button>
             </form>
           </div>
@@ -353,61 +440,7 @@ function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#123F6D] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-3 mb-4">
-                <Building2 className="h-8 w-8 text-[#F1683B]" />
-                <h4 className="text-2xl font-bold">Assetwise B2B Service</h4>
-              </div>
-              <p className="text-blue-100 mb-4">
-                Providing premium financial services with exclusive discounts for employees of partner companies.
-              </p>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-4 w-4 text-[#F1683B]" />
-                  <span className="text-blue-100">partnerships@assetwise.com</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="h-4 w-4 text-[#F1683B]" />
-                  <span className="text-blue-100">(555) 123-4567</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <MapPin className="h-4 w-4 text-[#F1683B]" />
-                  <span className="text-blue-100">123 Business Ave, Suite 100, City, ST 12345</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h5 className="text-lg font-semibold mb-4">Services</h5>
-              <ul className="space-y-2 text-blue-100">
-                <li><a href="#" className="hover:text-white transition-colors">Financial Planning</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Investment Management</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Insurance Services</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Tax Consultation</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h5 className="text-lg font-semibold mb-4">Company</h5>
-              <ul className="space-y-2 text-blue-100">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-blue-800 mt-8 pt-8 text-center">
-            <p className="text-blue-100">
-              &copy; 2025 Assetwise B2B Service. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }

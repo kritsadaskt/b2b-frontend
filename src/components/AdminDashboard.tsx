@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Building2, Mail, Phone, Users, X, Search, Clock } from 'lucide-react';
+import { LogOut, Plus, Building2, X, Search, Clock } from 'lucide-react';
 import { authService } from '../utils/auth';
 import { Supplier } from '../utils/types';
+import { useGetData, useGetSupplierMediaTypeList, useGetSupplierTypeList } from '../hooks/getData';
 
 interface Business {
   id: string;
@@ -10,9 +11,13 @@ interface Business {
   email: string;
   phone: string;
   employees: string;
-  industry: string;
-  status?: string;
+  type_id: number;
+  StatusList?: string;
   createdAt?: string;
+  address?: string;
+  city?: string;
+  remark?: string;
+  MediaList?: { id: number }[];
 }
 
 interface DataResponse {
@@ -30,18 +35,28 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sessionTime, setSessionTime] = useState(0);
-  const [newBusiness, setNewBusiness] = useState({
+  const [newBusiness, setNewBusiness] = useState<Business>({
+    id: '',
     companyName: '',
     contactName: '',
     email: '',
     phone: '',
     employees: '',
-    industry: ''
+    type_id: 0,
+    address: '',
+    city: '',
+    remark: '',
+    MediaList: [],
+    StatusList: 'Pending',
   });
+
+  const { data: bussinessData, loading: loadingData, error: errorData, refetch } = useGetData();
+  const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
+  const { data: supplierMediaTypeList, loading: loadingSupplierMediaTypeList, error: errorSupplierMediaTypeList, refetch: refetchSupplierMediaTypeList } = useGetSupplierMediaTypeList();
 
   useEffect(() => {
     fetchBusinesses();
-  }, []);
+  }, [bussinessData]);
 
   // Session timer effect
   useEffect(() => {
@@ -66,35 +81,20 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   }, [onLogout]);
 
   const fetchBusinesses = async () => {
-    const urlencoded = new URLSearchParams();
-    urlencoded.append("supplier_name", "");
     try {
       setLoading(true);
-      const response = await fetch('/api/Suplier/GetSuplier', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: urlencoded
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch businesses');
-      }
-      
-      const data: DataResponse = await response.json();
-      
+      // console.log(bussinessData);
+
       // Transform API data to match our interface
-      const transformedData = Array.isArray(data.Data) ? data.Data.map((item: Supplier, index: number) => ({
+      const transformedData = Array.isArray(bussinessData) ? bussinessData.map((item: Supplier, index: number) => ({
         id: item.uid || `business-${index}`,
         companyName: item.supplier_name || 'N/A',
         contactName: item.sales_person || 'N/A',
         email: item.email || 'N/A',
         phone: item.telephone || 'N/A',
         employees: item.head_count.toString() || 'N/A',
-        industry: item.business_type || 'N/A',
-        status: item.StatusList[0].name || 'Active',
+        type_id: item.type_id || 0,
+        status: item.StatusList[0]?.name || 'Active',
         createdAt: item.contact_date || new Date().toISOString()
       })) : [];
       
@@ -113,24 +113,32 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     
     // Create new business object
     const business: Business = {
-      id: `new-${Date.now()}`,
       ...newBusiness,
-      status: 'Pending',
+      StatusList: 'Pending',
       createdAt: new Date().toISOString()
     };
+
+    console.log(business);
+    return;
     
     // Add to local state (in real app, this would be an API call)
     setBusinesses([business, ...businesses]);
     
-    // Reset form and close sidebar
-    setNewBusiness({
-      companyName: '',
-      contactName: '',
-      email: '',
-      phone: '',
-      employees: '',
-      industry: ''
-    });
+          // Reset form and close sidebar
+      setNewBusiness({
+        id: '',
+        companyName: '',
+        contactName: '',
+        email: '',
+        phone: '',
+        employees: '',
+        type_id: 0,
+        address: '',
+        city: '',
+        remark: '',
+        MediaList: [],
+        StatusList: 'Pending',
+      });
     setShowSidebar(false);
     
     // Show success message
@@ -164,8 +172,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <button
                     onClick={() => {
                       if (authService.extendSession()) {
-                        setSessionTime(60);
-                        alert('Session extended by 1 hour');
+                        setSessionTime(240);
+                        alert('Session extended by 4 hours');
                       }
                     }}
                     className="ml-2 text-xs bg-[#F1683B] hover:bg-[#e5572f] text-white px-2 py-1 rounded"
@@ -293,17 +301,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <div className="text-sm text-gray-900">{business.employees}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{business.industry}</div>
+                          <div className="text-sm text-gray-900">{supplierTypeList.find(type => type.id === business.type_id)?.name || business.type_id}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            business.status === 'Active' 
+                            business.StatusList === 'Active' 
                               ? 'bg-green-100 text-green-800'
-                              : business.status === 'Pending'
+                              : business.StatusList === 'Pending'
                               ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {business.status || 'Active'}
+                            {business.StatusList || 'Active'}
                           </span>
                         </td>
                       </tr>
@@ -322,7 +330,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowSidebar(false)}></div>
           <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-[#123F6D]">Add New Business</h3>
+              <h3 className="text-lg font-semibold text-[#123F6D]">เพิ่มข้อมูลใหม่</h3>
               <button
                 onClick={() => setShowSidebar(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -334,7 +342,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <form onSubmit={handleAddBusiness} className="p-6 space-y-6 overflow-y-auto h-full pb-20">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Company Name *
+                  ชื่อบริษัท *
                 </label>
                 <input
                   type="text"
@@ -342,13 +350,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   value={newBusiness.companyName}
                   onChange={(e) => setNewBusiness({...newBusiness, companyName: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="Enter company name"
+                  placeholder="ระบุชื่อบริษัท"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Contact Name *
+                  ชื่อผู้ติดต่อ *
                 </label>
                 <input
                   type="text"
@@ -356,13 +364,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   value={newBusiness.contactName}
                   onChange={(e) => setNewBusiness({...newBusiness, contactName: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="Contact person name"
+                  placeholder="ระบุชื่อผู้ติดต่อ"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email Address *
+                  อีเมล *
                 </label>
                 <input
                   type="email"
@@ -376,45 +384,111 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Phone Number
+                  เบอร์โทรศัพท์
                 </label>
                 <input
                   type="tel"
                   value={newBusiness.phone}
                   onChange={(e) => setNewBusiness({...newBusiness, phone: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="(555) 123-4567"
+                  placeholder="081-234-5678"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ที่อยู่
+                </label>
+                <input
+                  type="text"
+                  value={newBusiness.address}
+                  onChange={(e) => setNewBusiness({...newBusiness, address: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  placeholder="ระบุที่อยู่"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  จังหวัด
+                </label>
+                <input
+                  type="text"
+                  value={newBusiness.city}
+                  onChange={(e) => setNewBusiness({...newBusiness, city: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  placeholder="ระบุจังหวัด"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Number of Employees
+                  จำนวนพนักงาน (Head Office)
                 </label>
-                <select
+                <input
+                  type="number"
                   value={newBusiness.employees}
                   onChange={(e) => setNewBusiness({...newBusiness, employees: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                >
-                  <option value="">Select range</option>
-                  <option value="1-10">1-10 employees</option>
-                  <option value="11-50">11-50 employees</option>
-                  <option value="51-200">51-200 employees</option>
-                  <option value="201-1000">201-1000 employees</option>
-                  <option value="1000+">1000+ employees</option>
-                </select>
+                  placeholder="ระบุจำนวนพนักงาน"
+                  min="0"
+                />
               </div>
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Industry
+                  ประเภท
+                </label>
+                <select
+                  value={newBusiness.type_id}
+                  onChange={(e) => setNewBusiness({...newBusiness, type_id: parseInt(e.target.value)})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                >
+                  <option value={0}>เลือกประเภทธุรกิจ</option>
+                  {supplierTypeList.map((type: any) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ช่องทางการรับข้อมูล
+                </label>
+                <select
+                  multiple
+                  value={newBusiness.MediaList?.map(m => m.id.toString()) || []}
+                  onChange={(e) => {
+                    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+                    setNewBusiness({
+                      ...newBusiness, 
+                      MediaList: selectedOptions.map((id: string) => ({ id: parseInt(id) }))
+                    });
+                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  size={4}
+                >
+                  {supplierMediaTypeList.map((type: any) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-sm text-gray-500">กด Ctrl หรือ Command เพื่อเลือกหลายตัวเลือก</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  หมายเหตุ
                 </label>
                 <input
                   type="text"
-                  value={newBusiness.industry}
-                  onChange={(e) => setNewBusiness({...newBusiness, industry: e.target.value})}
+                  value={newBusiness.remark}
+                  onChange={(e) => setNewBusiness({...newBusiness, remark: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="e.g., Technology, Healthcare, Finance"
+                  placeholder="ระบุหมายเหตุ"
                 />
               </div>
               
@@ -423,7 +497,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   type="submit"
                   className="w-full bg-[#F1683B] hover:bg-[#e5572f] text-white py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-[1.02]"
                 >
-                  Add Business
+                  เพิ่มข้อมูล
                 </button>
               </div>
             </form>
