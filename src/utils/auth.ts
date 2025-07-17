@@ -5,7 +5,7 @@ interface AuthSession {
 }
 
 const AUTH_STORAGE_KEY = 'assetwise_admin_session';
-const SESSION_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+const SESSION_DURATION = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
 export const authService = {
   // Store authentication session

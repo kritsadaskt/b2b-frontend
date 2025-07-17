@@ -503,6 +503,9 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-white">
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-neutral-500/40 text-white px-6 py-3 rounded-lg font-medium text-2xl z-50">
+          ทดสอบ
+        </div>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route 

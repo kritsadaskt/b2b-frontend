@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Building2, X, Search, Clock } from 'lucide-react';
+import { LogOut, Plus, Building2, X, Search, SquarePen } from 'lucide-react';
 import { authService } from '../utils/auth';
 import { Supplier } from '../utils/types';
 import { useGetData, useGetSupplierMediaTypeList, useGetSupplierTypeList } from '../hooks/getData';
+import Select from 'react-select';
 
 interface Business {
   id: string;
@@ -33,8 +34,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sessionTime, setSessionTime] = useState(0);
   const [newBusiness, setNewBusiness] = useState<Business>({
     id: '',
     companyName: '',
@@ -49,6 +50,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     MediaList: [],
     StatusList: 'Pending',
   });
+  const [editBusiness, setEditBusiness] = useState<Business | null>(null);
 
   const { data: bussinessData, loading: loadingData, error: errorData, refetch } = useGetData();
   const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
@@ -62,7 +64,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   useEffect(() => {
     const updateSessionTime = () => {
       const remainingTime = authService.getRemainingTime();
-      setSessionTime(remainingTime);
       
       // Auto logout when session expires
       if (remainingTime === 0) {
@@ -91,11 +92,15 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         companyName: item.supplier_name || 'N/A',
         contactName: item.sales_person || 'N/A',
         email: item.email || 'N/A',
+        address: item.address || 'N/A',
+        city: item.city || 'N/A',
+        remark: item.remark || 'N/A',
         phone: item.telephone || 'N/A',
         employees: item.head_count.toString() || 'N/A',
         type_id: item.type_id || 0,
         status: item.StatusList[0]?.name || 'Active',
-        createdAt: item.contact_date || new Date().toISOString()
+        createdAt: item.contact_date || new Date().toISOString(),
+        MediaList: item.MediaList || []
       })) : [];
       
       setBusinesses(transformedData);
@@ -145,6 +150,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     alert('Business added successfully!');
   };
 
+  const handleEditBusiness = (business: Business) => {
+    console.log(business);
+    setEditBusiness(business);
+    setShowEditModal(true);
+  };
+
   const filteredBusinesses = businesses.filter(business =>
     business.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     business.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -162,32 +173,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <h1 className="text-2xl font-bold text-[#123F6D]">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Session Timer */}
-              <div className="flex items-center space-x-2 text-gray-600">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm">
-                  {sessionTime > 0 ? `${sessionTime}m left` : 'Expired'}
-                </span>
-                {sessionTime > 0 && sessionTime < 10 && (
-                  <button
-                    onClick={() => {
-                      if (authService.extendSession()) {
-                        setSessionTime(240);
-                        alert('Session extended by 4 hours');
-                      }
-                    }}
-                    className="ml-2 text-xs bg-[#F1683B] hover:bg-[#e5572f] text-white px-2 py-1 rounded"
-                  >
-                    Extend
-                  </button>
-                )}
-              </div>
               <button
                 onClick={onLogout}
                 className="flex items-center space-x-2 text-gray-600 hover:text-[#123F6D] transition-colors"
               >
                 <LogOut className="h-5 w-5" />
-                <span>Logout</span>
+                <span>ออกจากระบบ</span>
               </button>
             </div>
           </div>
@@ -199,15 +190,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         {/* Page Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-[#123F6D]">Business Partners</h2>
-            <p className="text-gray-600 mt-2">Manage your B2B business partnerships</p>
+            <h2 className="text-3xl font-bold text-[#123F6D]">ระบบจัดการข้อมูลบริษัท</h2>
           </div>
           <button
             onClick={() => setShowSidebar(true)}
             className="bg-[#F1683B] hover:bg-[#e5572f] text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all duration-300 transform hover:scale-105"
           >
             <Plus className="h-5 w-5" />
-            <span>Add New</span>
+            <span>เพิ่ม</span>
           </button>
         </div>
 
@@ -217,7 +207,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
-              placeholder="Search businesses..."
+              placeholder="ค้นหา..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
@@ -248,25 +238,28 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Company
+                      ชื่อบริษัท
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contact
+                      ชื่อผู้ติดต่อ
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
+                      อีเมล
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phone
+                      เบอร์โทรศัพท์
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Employees
+                      จำนวนพนักงาน
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Industry
+                      ประเภท
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      สถานะ
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      จัดการ
                     </th>
                   </tr>
                 </thead>
@@ -274,7 +267,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   {filteredBusinesses.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                        {searchTerm ? 'No businesses found matching your search.' : 'No businesses found.'}
+                        {searchTerm ? 'ไม่พบข้อมูลบริษัทที่ตรงกับค้นหา' : 'ไม่พบข้อมูลบริษัท'}
                       </td>
                     </tr>
                   ) : (
@@ -314,6 +307,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             {business.StatusList || 'Active'}
                           </span>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button onClick={() => handleEditBusiness(business)} className="px-4 py-2 text-accent rounded-full hover:bg-gray-200 font-semibold transition-all duration-300">
+                            <SquarePen className="h-5 w-5" />
+                          </button>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -326,9 +324,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
       {/* Add Business Sidebar */}
       {showSidebar && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowSidebar(false)}></div>
-          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-[#123F6D]">เพิ่มข้อมูลใหม่</h3>
               <button
@@ -339,7 +337,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               </button>
             </div>
             
-            <form onSubmit={handleAddBusiness} className="p-6 space-y-6 overflow-y-auto h-full pb-20">
+            <form onSubmit={handleAddBusiness} className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   ชื่อบริษัท *
@@ -353,33 +351,36 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   placeholder="ระบุชื่อบริษัท"
                 />
               </div>
+
+              <div className='flex gap-6'>
               
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ชื่อผู้ติดต่อ *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newBusiness.contactName}
-                  onChange={(e) => setNewBusiness({...newBusiness, contactName: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="ระบุชื่อผู้ติดต่อ"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  อีเมล *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={newBusiness.email}
-                  onChange={(e) => setNewBusiness({...newBusiness, email: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="contact@company.com"
-                />
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    ชื่อผู้ติดต่อ *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newBusiness.contactName}
+                    onChange={(e) => setNewBusiness({...newBusiness, contactName: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                    placeholder="ระบุชื่อผู้ติดต่อ"
+                  />
+                </div>
+                
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    อีเมล *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={newBusiness.email}
+                    onChange={(e) => setNewBusiness({...newBusiness, email: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                    placeholder="contact@company.com"
+                  />
+                </div>
               </div>
               
               <div>
@@ -421,62 +422,70 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  จำนวนพนักงาน (Head Office)
-                </label>
-                <input
-                  type="number"
-                  value={newBusiness.employees}
-                  onChange={(e) => setNewBusiness({...newBusiness, employees: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="ระบุจำนวนพนักงาน"
-                  min="0"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ประเภท
-                </label>
-                <select
-                  value={newBusiness.type_id}
-                  onChange={(e) => setNewBusiness({...newBusiness, type_id: parseInt(e.target.value)})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                >
-                  <option value={0}>เลือกประเภทธุรกิจ</option>
-                  {supplierTypeList.map((type: any) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
+              <div className='flex gap-6'>
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    จำนวนพนักงาน (Head Office)
+                  </label>
+                  <input
+                    type="number"
+                    value={newBusiness.employees}
+                    onChange={(e) => setNewBusiness({...newBusiness, employees: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                    placeholder="ระบุจำนวนพนักงาน"
+                    min="0"
+                  />
+                </div>             
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    ประเภท
+                  </label>
+                  <select
+                    value={newBusiness.type_id}
+                    onChange={(e) => setNewBusiness({...newBusiness, type_id: parseInt(e.target.value)})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  >
+                    <option value={0}>เลือกประเภทธุรกิจ</option>
+                    {supplierTypeList.map((type: any) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   ช่องทางการรับข้อมูล
                 </label>
-                <select
-                  multiple
-                  value={newBusiness.MediaList?.map(m => m.id.toString()) || []}
-                  onChange={(e) => {
-                    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+                <Select
+                  isMulti
+                  value={supplierMediaTypeList
+                    .filter(type => newBusiness.MediaList?.some(m => m.id === type.id))
+                    .map(type => ({ value: type.id, label: type.name }))
+                  }
+                  onChange={(selectedOptions) => {
                     setNewBusiness({
-                      ...newBusiness, 
-                      MediaList: selectedOptions.map((id: string) => ({ id: parseInt(id) }))
+                      ...newBusiness,
+                      MediaList: selectedOptions.map(option => ({ id: option.value }))
                     });
                   }}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  size={4}
-                >
-                  {supplierMediaTypeList.map((type: any) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-sm text-gray-500">กด Ctrl หรือ Command เพื่อเลือกหลายตัวเลือก</p>
+                  options={supplierMediaTypeList.map(type => ({
+                    value: type.id,
+                    label: type.name
+                  }))}
+                  className="w-full"
+                  classNamePrefix="react-select"
+                  theme={(theme) => ({
+                    ...theme,
+                    colors: {
+                      ...theme.colors,
+                      primary: '#123F6D',
+                      primary25: '#e6edf5'
+                    }
+                  })}
+                />
               </div>
 
               <div>
@@ -492,12 +501,233 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 />
               </div>
               
-              <div className="pt-4">
+              <div className="pt-4 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSidebar(false)}
+                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  ยกเลิก
+                </button>
                 <button
                   type="submit"
-                  className="w-full bg-[#F1683B] hover:bg-[#e5572f] text-white py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-[1.02]"
+                  className="px-6 py-3 bg-[#F1683B] hover:bg-[#e5572f] text-white rounded-lg font-semibold transition-all duration-300"
                 >
                   เพิ่มข้อมูล
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Business Modal */}
+      {showEditModal && editBusiness && (
+        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowEditModal(false)}></div>
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-[#123F6D]">แก้ไขข้อมูล</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // Handle edit submission here
+              console.log(editBusiness);
+              setShowEditModal(false);
+            }} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ชื่อบริษัท *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editBusiness.companyName}
+                  onChange={(e) => setEditBusiness({...editBusiness, companyName: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  placeholder="ระบุชื่อบริษัท"
+                />
+              </div>
+
+              <div className='flex gap-6'>
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    ชื่อผู้ติดต่อ *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editBusiness.contactName}
+                    onChange={(e) => setEditBusiness({...editBusiness, contactName: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                    placeholder="ระบุชื่อผู้ติดต่อ"
+                  />
+                </div>
+                
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    อีเมล *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={editBusiness.email}
+                    onChange={(e) => setEditBusiness({...editBusiness, email: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                    placeholder="ระบุอีเมล"
+                  />
+                </div>
+              </div>
+
+              <div className='flex gap-6'>
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    เบอร์โทรศัพท์ *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={editBusiness.phone}
+                    onChange={(e) => setEditBusiness({...editBusiness, phone: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                    placeholder="ระบุเบอร์โทรศัพท์"
+                  />
+                </div>
+
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    จำนวนพนักงาน *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={editBusiness.employees}
+                    onChange={(e) => setEditBusiness({...editBusiness, employees: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                    placeholder="ระบุจำนวนพนักงาน"
+                  />
+                </div>
+              </div>
+
+              <div className='w-full md:w-1/2'>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ที่อยู่
+                </label>
+                <input
+                  type="text"
+                  value={editBusiness.address}
+                  onChange={(e) => setEditBusiness({...editBusiness, address: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  placeholder="ระบุที่อยู่"
+                />
+              </div>
+
+              <div className='w-full md:w-1/2'>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  จังหวัด
+                </label>
+                <input
+                  type="text"
+                  value={editBusiness.city}
+                  onChange={(e) => setEditBusiness({...editBusiness, city: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  placeholder="ระบุจังหวัด"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ประเภทธุรกิจ *
+                </label>
+                <Select
+                  value={supplierTypeList.find(type => type.id === editBusiness.type_id) ? {
+                    value: editBusiness.type_id,
+                    label: supplierTypeList.find(type => type.id === editBusiness.type_id)?.name
+                  } : null}
+                  onChange={(selected) => setEditBusiness({...editBusiness, type_id: selected?.value || 0})}
+                  options={supplierTypeList.map(type => ({
+                    value: type.id,
+                    label: type.name
+                  }))}
+                  className="w-full"
+                  classNamePrefix="react-select"
+                  theme={(theme) => ({
+                    ...theme,
+                    colors: {
+                      ...theme.colors,
+                      primary: '#123F6D',
+                      primary25: '#e6edf5'
+                    }
+                  })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ช่องทางการรับข้อมูล
+                </label>
+                <Select
+                  isMulti
+                  value={supplierMediaTypeList
+                    .filter(type => editBusiness.MediaList?.some(m => m.id === type.id))
+                    .map(type => ({ value: type.id, label: type.name }))
+                  }
+                  onChange={(selectedOptions) => {
+                    setEditBusiness({
+                      ...editBusiness,
+                      MediaList: selectedOptions.map(option => ({ id: option.value }))
+                    });
+                  }}
+                  options={supplierMediaTypeList.map(type => ({
+                    value: type.id,
+                    label: type.name
+                  }))}
+                  className="w-full"
+                  classNamePrefix="react-select"
+                  theme={(theme) => ({
+                    ...theme,
+                    colors: {
+                      ...theme.colors,
+                      primary: '#123F6D',
+                      primary25: '#e6edf5'
+                    }
+                  })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  หมายเหตุ
+                </label>
+                <input
+                  type="text"
+                  value={editBusiness.remark}
+                  onChange={(e) => setEditBusiness({...editBusiness, remark: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  placeholder="ระบุหมายเหตุ"
+                />
+              </div>
+
+              <div className="pt-4 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-[#F1683B] hover:bg-[#e5572f] text-white rounded-lg font-semibold transition-all duration-300"
+                >
+                  บันทึก
                 </button>
               </div>
             </form>
