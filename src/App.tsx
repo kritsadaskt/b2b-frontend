@@ -85,7 +85,7 @@ function HomePage() {
         company.supplier_name.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-      console.log(availableCompanies);
+      //console.log(availableCompanies);
       
       setSearchResult(isAvailable ? 'available' : 'not-available');
     }
@@ -241,21 +241,20 @@ function HomePage() {
               {searchResult === 'available' ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                  <h4 className="text-xl font-semibold text-green-800 mb-2">Great News!</h4>
+                  <h4 className="text-xl font-semibold text-green-800 mb-2">พบข้อมูล</h4>
                   <p className="text-green-700">
-                    We offer services to employees of <strong>{searchQuery}</strong>. 
-                    Your employees are eligible for exclusive discounts on our financial services.
+                    พบข้อมูลบริษัท <strong>{searchQuery}</strong> กรุณาติดต่อพนักงานขายเพื่อยืนยันรับสิทธิ์
                   </p>
                 </div>
               ) : (
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
                   <Building2 className="h-12 w-12 text-[#F1683B] mx-auto mb-4" />
-                  <h4 className="text-xl font-semibold text-orange-800 mb-2">Not Yet Available</h4>
+                  <h4 className="text-xl font-semibold text-orange-800 mb-2">ยังไม่พบข้อมูล</h4>
                   <p className="text-orange-700 mb-4">
-                    We don't currently offer services to <strong>{searchQuery}</strong>, but we'd love to discuss a partnership.
+                    ยังไม่พบข้อมูลบริษัท <strong>{searchQuery}</strong> หากสนใจสมัครเป็นพาร์ทเนอร์กับ AssetWise กรุณากรอกข้อมูลด้านล่าง
                   </p>
                   <a href="#partner" className="inline-flex items-center space-x-2 bg-[#F1683B] hover:bg-[#e5572f] text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                    <span>Submit Your Business</span>
+                    <span>สมัครเป็นพาร์ทเนอร์</span>
                     <ArrowRight className="h-4 w-4" />
                   </a>
                 </div>
