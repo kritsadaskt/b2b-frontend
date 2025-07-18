@@ -11,7 +11,6 @@ export const useSaveData = (Supplier: Supplier) => {
   header.append("Content-Type", "application/json");
 
   const body = JSON.stringify(Supplier);
-  console.log(body);
 
   const fetchData = async () => {
     try {

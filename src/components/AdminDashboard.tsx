@@ -148,33 +148,29 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         setAlertPopupText('บันทึกข้อมูลไม่สำเร็จ');
       }
       // Reset form and close sidebar
-      // setNewBusiness({
-      //   uid: '',
-      //   supplier_name: '',
-      //   sales_person: '',
-      //   email: '',
-      //   telephone: '',
-      //   head_count: 0,
-      //   type_id: 0,
-      //   address: '',
-      //   city: '', 
-      //   remark: '',
-      //   media_remark: '',
-      //   MediaList: [],
-      //   StatusList: [],
-      //   type_name: '',
-      //   contact_date: '',
-      //   update_time: '',
-      //   business_type: '',
-      //   is_active: true,
-      // });
-      //console.log(response);
+      setNewBusiness({
+        uid: '',
+        supplier_name: '',
+        sales_person: '',
+        email: '',
+        telephone: '',
+        head_count: 0,
+        type_id: 0,
+        address: '',
+        city: '', 
+        remark: '',
+        media_remark: '',
+        MediaList: [],
+        StatusList: [],
+        type_name: '',
+        contact_date: '',
+        update_time: '',
+        business_type: '',
+        is_active: true,
+      });
     } catch (error) {
       console.error('Error saving business:', error);
     }
-    //setShowSidebar(false);
-    // Show success message
-    //alert('Business added successfully!');
   };
 
   const handleEditBusiness = (business: Business) => {
