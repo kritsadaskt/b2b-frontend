@@ -458,8 +458,8 @@ function App() {
 
     // Optional: Show remaining time in console for debugging
     if (existingSession) {
-      const remainingTime = authService.getRemainingTime();
-      console.log(`Session restored. Time remaining: ${remainingTime} minutes`);
+      // const remainingTime = authService.getRemainingTime();
+      console.log(`Session restored.`);
     }
   }, []);
 
@@ -472,7 +472,7 @@ function App() {
       // Store the session in localStorage
       authService.setSession(true);
       
-      console.log('Login successful. Session will expire in 1 hour.');
+      console.log('Login successful.');
     } else {
       setLoginError('Invalid username or password');
     }

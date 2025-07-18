@@ -4,9 +4,11 @@ import { authService } from '../utils/auth';
 import { Supplier } from '../utils/types';
 import { useGetData, useGetSupplierMediaTypeList, useGetSupplierTypeList } from '../hooks/getData';
 import Select from 'react-select';
+import { useSaveData } from '../hooks/saveData';
+import AlertPopup from './AlertPopup';
 
 interface Business {
-  id: string;
+  uid: string;
   companyName: string;
   contactName: string;
   email: string;
@@ -36,25 +38,38 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [newBusiness, setNewBusiness] = useState<Business>({
-    id: '',
-    companyName: '',
-    contactName: '',
+  const [newBusiness, setNewBusiness] = useState<Supplier>({
+    uid: '',
+    supplier_name: '',
+    sales_person: '',
     email: '',
-    phone: '',
-    employees: '',
+    telephone: '',
+    head_count: 0,
     type_id: 0,
     address: '',
     city: '',
     remark: '',
+    media_remark: '',
     MediaList: [],
-    StatusList: 'Pending',
+    StatusList: [],
+    type_name: '',
+    contact_date: '',
+    update_time: '',
+    business_type: '',
+    is_active: true,
   });
   const [editBusiness, setEditBusiness] = useState<Business | null>(null);
+  const [showAlertPopup, setShowAlertPopup] = useState(false);
+  const [alertPopupType, setAlertPopupType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+  const [alertPopupTitle, setAlertPopupTitle] = useState('');
+  const [alertPopupText, setAlertPopupText] = useState('');
 
   const { data: bussinessData, loading: loadingData, error: errorData, refetch } = useGetData();
   const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
   const { data: supplierMediaTypeList, loading: loadingSupplierMediaTypeList, error: errorSupplierMediaTypeList, refetch: refetchSupplierMediaTypeList } = useGetSupplierMediaTypeList();
+  const saveDataResult = useSaveData(newBusiness);
+  const { data: saveData = [], loading: loadingSaveData = false, error: errorSaveData = null, refetch: refetchSaveData } = saveDataResult || {};
+
 
   useEffect(() => {
     fetchBusinesses();
@@ -88,7 +103,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
       // Transform API data to match our interface
       const transformedData = Array.isArray(bussinessData) ? bussinessData.map((item: Supplier, index: number) => ({
-        id: item.uid || `business-${index}`,
+        uid: item.uid || `business-${index}`,
         companyName: item.supplier_name || 'N/A',
         contactName: item.sales_person || 'N/A',
         email: item.email || 'N/A',
@@ -113,41 +128,53 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const handleAddBusiness = (e: React.FormEvent) => {
+  const handleAddBusiness = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Create new business object
-    const business: Business = {
-      ...newBusiness,
-      StatusList: 'Pending',
-      createdAt: new Date().toISOString()
-    };
 
-    console.log(business);
-    return;
-    
-    // Add to local state (in real app, this would be an API call)
-    setBusinesses([business, ...businesses]);
-    
-          // Reset form and close sidebar
-      setNewBusiness({
-        id: '',
-        companyName: '',
-        contactName: '',
-        email: '',
-        phone: '',
-        employees: '',
-        type_id: 0,
-        address: '',
-        city: '',
-        remark: '',
-        MediaList: [],
-        StatusList: 'Pending',
-      });
-    setShowSidebar(false);
-    
+    try {
+      const response = refetchSaveData && await refetchSaveData();
+      if (response.Success) {
+        console.log(response);
+        setShowSidebar(false);
+        setShowAlertPopup(true);
+        setAlertPopupType('success');
+        setAlertPopupTitle('บันทึกข้อมูลสำเร็จ');
+        setAlertPopupText('บันทึกข้อมูลสำเร็จ');
+      } else {
+        setShowSidebar(false);
+        setShowAlertPopup(true);
+        setAlertPopupType('error');
+        setAlertPopupTitle('บันทึกข้อมูลไม่สำเร็จ');
+        setAlertPopupText('บันทึกข้อมูลไม่สำเร็จ');
+      }
+      // Reset form and close sidebar
+      // setNewBusiness({
+      //   uid: '',
+      //   supplier_name: '',
+      //   sales_person: '',
+      //   email: '',
+      //   telephone: '',
+      //   head_count: 0,
+      //   type_id: 0,
+      //   address: '',
+      //   city: '', 
+      //   remark: '',
+      //   media_remark: '',
+      //   MediaList: [],
+      //   StatusList: [],
+      //   type_name: '',
+      //   contact_date: '',
+      //   update_time: '',
+      //   business_type: '',
+      //   is_active: true,
+      // });
+      //console.log(response);
+    } catch (error) {
+      console.error('Error saving business:', error);
+    }
+    //setShowSidebar(false);
     // Show success message
-    alert('Business added successfully!');
+    //alert('Business added successfully!');
   };
 
   const handleEditBusiness = (business: Business) => {
@@ -272,7 +299,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </tr>
                   ) : (
                     filteredBusinesses.map((business) => (
-                      <tr key={business.id} className="hover:bg-gray-50">
+                      <tr key={business.uid} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <Building2 className="h-5 w-5 text-[#123F6D] mr-3" />
@@ -345,8 +372,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <input
                   type="text"
                   required
-                  value={newBusiness.companyName}
-                  onChange={(e) => setNewBusiness({...newBusiness, companyName: e.target.value})}
+                  value={newBusiness?.supplier_name}
+                  onChange={(e) => setNewBusiness({...newBusiness, supplier_name: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="ระบุชื่อบริษัท"
                 />
@@ -361,8 +388,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <input
                     type="text"
                     required
-                    value={newBusiness.contactName}
-                    onChange={(e) => setNewBusiness({...newBusiness, contactName: e.target.value})}
+                    value={newBusiness?.sales_person}
+                    onChange={(e) => setNewBusiness({...newBusiness, sales_person: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                     placeholder="ระบุชื่อผู้ติดต่อ"
                   />
@@ -375,7 +402,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <input
                     type="email"
                     required
-                    value={newBusiness.email}
+                    value={newBusiness?.email}
                     onChange={(e) => setNewBusiness({...newBusiness, email: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                     placeholder="contact@company.com"
@@ -389,8 +416,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </label>
                 <input
                   type="tel"
-                  value={newBusiness.phone}
-                  onChange={(e) => setNewBusiness({...newBusiness, phone: e.target.value})}
+                  value={newBusiness?.telephone}
+                  onChange={(e) => setNewBusiness({...newBusiness, telephone: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="081-234-5678"
                 />
@@ -402,7 +429,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </label>
                 <input
                   type="text"
-                  value={newBusiness.address}
+                  value={newBusiness?.address}
                   onChange={(e) => setNewBusiness({...newBusiness, address: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="ระบุที่อยู่"
@@ -415,7 +442,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </label>
                 <input
                   type="text"
-                  value={newBusiness.city}
+                  value={newBusiness?.city}
                   onChange={(e) => setNewBusiness({...newBusiness, city: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="ระบุจังหวัด"
@@ -429,8 +456,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   </label>
                   <input
                     type="number"
-                    value={newBusiness.employees}
-                    onChange={(e) => setNewBusiness({...newBusiness, employees: e.target.value})}
+                    value={newBusiness?.head_count}
+                    onChange={(e) => setNewBusiness({...newBusiness, head_count: parseInt(e.target.value)})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                     placeholder="ระบุจำนวนพนักงาน"
                     min="0"
@@ -441,7 +468,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     ประเภท
                   </label>
                   <select
-                    value={newBusiness.type_id}
+                    value={newBusiness?.type_id}
                     onChange={(e) => setNewBusiness({...newBusiness, type_id: parseInt(e.target.value)})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   >
@@ -462,13 +489,16 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <Select
                   isMulti
                   value={supplierMediaTypeList
-                    .filter(type => newBusiness.MediaList?.some(m => m.id === type.id))
+                    .filter(type => newBusiness?.MediaList?.some(m => m.id === type.id))
                     .map(type => ({ value: type.id, label: type.name }))
                   }
                   onChange={(selectedOptions) => {
                     setNewBusiness({
                       ...newBusiness,
-                      MediaList: selectedOptions.map(option => ({ id: option.value }))
+                      MediaList: selectedOptions.map(option => ({ 
+                        id: option.value,
+                        name: option.label 
+                      }))
                     });
                   }}
                   options={supplierMediaTypeList.map(type => ({
@@ -494,7 +524,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </label>
                 <input
                   type="text"
-                  value={newBusiness.remark}
+                  value={newBusiness?.remark}
                   onChange={(e) => setNewBusiness({...newBusiness, remark: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="ระบุหมายเหตุ"
@@ -725,7 +755,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-[#F1683B] hover:bg-[#e5572f] text-white rounded-lg font-semibold transition-all duration-300"
+                  disabled
+                  className="px-6 py-3 bg-[#F1683B] hover:bg-[#e5572f] text-white rounded-lg font-semibold transition-all duration-300 opacity-50 cursor-not-allowed"
                 >
                   บันทึก
                 </button>
@@ -734,6 +765,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           </div>
         </div>
       )}
+
+      {showAlertPopup && (
+        <AlertPopup
+          popup_type={alertPopupType}
+          popup_title={alertPopupTitle}
+          popup_text={alertPopupText}
+          onCancel={() => setShowAlertPopup(false)}
+          onConfirm={() => setShowAlertPopup(false)}
+        />
+      )}
+
     </div>
   );
 }

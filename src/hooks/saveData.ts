@@ -8,9 +8,10 @@ export const useSaveData = (Supplier: Supplier) => {
 
   const header = new Headers();
   header.append("Authorization", "Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=");
-  header.append("Content-Type", "application/x-www-form-urlencoded");
+  header.append("Content-Type", "application/json");
 
   const body = JSON.stringify(Supplier);
+  console.log(body);
 
   const fetchData = async () => {
     try {
@@ -27,6 +28,7 @@ export const useSaveData = (Supplier: Supplier) => {
       const result = await response.json();
       setData(result);
       setError(null);
+      return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while saving data');
       console.error('Error saving data:', err);
