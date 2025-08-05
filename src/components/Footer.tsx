@@ -96,12 +96,12 @@ const footerMenus = {
 
 function Footer() {
     return (
-      <footer className="bg-neutral-800 pt-9 pb-4">
-        <div className="container mx-auto">
+      <footer className="bg-[#031121] pt-9 pb-4">
+        <div className="container px-4 md:px-0 mx-auto">
           <div className="w-full flex flex-col md:flex-row">
             <div className="w-full md:w-4/12 flex flex-col gap-3 mb-5 md:mb-0">
               <img src='https://assetwise.co.th/wp-content/themes/seed-spring/img/th/logo-asw.png' alt="" width={160} height={35} className="object-contain" />
-              <h4 className="text-white text-[26px]">ติดตามแอสเซทไวส์</h4>
+              <h4 className="text-white text-[24px] lg:text-[26px]">ติดตามแอสเซทไวส์</h4>
               <div className="social-listed flex w-2/3 gap-3">
                 <a href="https://th-th.facebook.com/AssetWiseThailand/" title="Facebook">
                   <img src="/images/fb-o.png" alt="Facbook" className="object-contain w-14 h-14" />
@@ -122,41 +122,41 @@ function Footer() {
             </div>
             <div className="w-full md:w-8/12 grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-0 md:flex-row justify-between">
               <div className="menu">
-                <h4 className="text-white text-[22px] mb-3">แอสเซทไวส์</h4>
-                <ul className="flex flex-col gap-2">
+                <h4 className="text-white text-[20px] mb-2">แอสเซทไวส์</h4>
+                <ul className="flex flex-col gap-1">
                   {footerMenus.menu1.map((menu, key) => (
                     <li key={key}>
-                      <a href={menu.link} className="text-neutral-400 font-light text-[16px] hover:text-white transition">{menu.name}</a>
+                      <a href={menu.link} className="text-neutral-400 font-light text-[14px] hover:text-white transition">{menu.name}</a>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="menu">
-                <h4 className="text-white text-[22px] mb-3">บริการ</h4>
-                <ul className="flex flex-col gap-2">
+                <h4 className="text-white text-[20px] mb-2">บริการ</h4>
+                <ul className="flex flex-col gap-1">
                   {footerMenus.menu2.map((menu, key) => (
                     <li key={key}>
-                      <a href={menu.link} className="text-neutral-400 font-light text-[16px] hover:text-white transition">{menu.name}</a>
+                      <a href={menu.link} className="text-neutral-400 font-light text-[14px] hover:text-white transition">{menu.name}</a>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="menu">
-                <h4 className="text-white text-[22px] mb-3">สนใจทำธุรกิจกับเรา</h4>
-                <ul className="flex flex-col gap-2">
+                <h4 className="text-white text-[20px] mb-2">สนใจทำธุรกิจกับเรา</h4>
+                <ul className="flex flex-col gap-1">
                   {footerMenus.menu3.map((menu, key) => (
                     <li key={key}>
-                      <a href={menu.link} className="text-neutral-400 font-light text-[16px] hover:text-white transition">{menu.name}</a>
+                      <a href={menu.link} className="text-neutral-400 font-light text-[14px] hover:text-white transition">{menu.name}</a>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="menu">
-                <h4 className="text-white text-[22px] mb-3">ติดต่อ</h4>
-                <ul className="flex flex-col gap-2">
+                <h4 className="text-white text-[20px] mb-2">ติดต่อ</h4>
+                <ul className="flex flex-col gap-1">
                   {footerMenus.menu4.map((menu, key) => (
                     <li key={key}>
-                      <a href={menu.link} className="text-neutral-400 font-light text-[16px] hover:text-white transition">{menu.name}</a>
+                      <a href={menu.link} className="text-neutral-400 font-light text-[14px] hover:text-white transition">{menu.name}</a>
                     </li>
                   ))}
                 </ul>

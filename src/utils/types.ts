@@ -29,3 +29,12 @@ export interface Supplier {
   StatusList: Status[];
   MediaList: Media[];
 }
+
+export interface B2bLead {
+  fname: string;
+  tel: string;
+  email: string;
+  company: string;
+  interestedProject: number;
+  media: string;
+}

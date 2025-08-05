@@ -7,6 +7,7 @@ import { authService } from './utils/auth';
 import { useGetData } from './hooks/getData';
 import { Supplier } from './utils/types';
 import Footer from './components/Footer';
+import RegisterLeadForm from './components/RegisterLeadForm';
 
 function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -177,14 +178,14 @@ function HomePage() {
       </section>
 
       {/* Search Section */}
-      <section id="search" className="py-20 bg-gray-50">
+      <section id="search" className="pt-10 pb-5 lg:py-10 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h3 className="text-3xl md:text-4xl font-bold text-[#123F6D] mb-4">
               ตรวจสอบสิทธิ์
             </h3>
             <p className="text-lg text-gray-600">
-              กรอกชื่อบริษัทเพื่อตรวจสอบสิทธิ์ของพนักงาน
+              กรอกชื่อบริษัทเพื่อตรวจสอบสิทธิ์ของคุณ
             </p>
           </div>
 
@@ -239,12 +240,13 @@ function HomePage() {
           {searchResult && (
             <div className="max-w-2xl mx-auto">
               {searchResult === 'available' ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-6 md:p-6 text-center">
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h4 className="text-xl font-semibold text-green-800 mb-2">พบข้อมูล</h4>
-                  <p className="text-green-700">
-                    พบข้อมูลบริษัท <strong>{searchQuery}</strong> กรุณาติดต่อพนักงานขายเพื่อยืนยันรับสิทธิ์
-                  </p>
+                  <h5 className="text-green-700 text-xl mb-4">บริษัท <strong>{searchQuery}</strong></h5>
+                  <p className="text-green-700">กรุณากรอกข้อมูลด้านล่างเพื่อยืนยันรับสิทธิ์</p>
+                  <hr className="my-7 border-green-500 w-1/3 mx-auto border-2" />
+                  <RegisterLeadForm />
                 </div>
               ) : (
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
@@ -325,7 +327,7 @@ function HomePage() {
       </section>
 
       {/* Business Submission Form */}
-      <section id="partner" className="py-20 bg-gray-50">
+      <section id="partner" className="py-10 lg:py-20 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h3 className="text-3xl md:text-4xl font-bold text-[#123F6D] mb-4">

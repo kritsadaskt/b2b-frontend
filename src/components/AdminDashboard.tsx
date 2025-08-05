@@ -64,7 +64,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [alertPopupTitle, setAlertPopupTitle] = useState('');
   const [alertPopupText, setAlertPopupText] = useState('');
 
-  const { data: bussinessData, loading: loadingData, error: errorData, refetch } = useGetData();
+  const { data: bussinessData, loading: loadingData, error: errorData, refetch: refetchBusinesses } = useGetData();
   const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
   const { data: supplierMediaTypeList, loading: loadingSupplierMediaTypeList, error: errorSupplierMediaTypeList, refetch: refetchSupplierMediaTypeList } = useGetSupplierMediaTypeList();
   const saveDataResult = useSaveData(newBusiness);
@@ -102,21 +102,27 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       // console.log(bussinessData);
 
       // Transform API data to match our interface
-      const transformedData = Array.isArray(bussinessData) ? bussinessData.map((item: Supplier, index: number) => ({
-        uid: item.uid || `business-${index}`,
-        companyName: item.supplier_name || 'N/A',
-        contactName: item.sales_person || 'N/A',
-        email: item.email || 'N/A',
-        address: item.address || 'N/A',
-        city: item.city || 'N/A',
-        remark: item.remark || 'N/A',
-        phone: item.telephone || 'N/A',
-        employees: item.head_count.toString() || 'N/A',
-        type_id: item.type_id || 0,
-        status: item.StatusList[0]?.name || 'Active',
-        createdAt: item.contact_date || new Date().toISOString(),
-        MediaList: item.MediaList || []
-      })) : [];
+      const transformedData = Array.isArray(bussinessData) ? bussinessData
+        .sort((a, b) => {
+          const dateA = new Date(a.contact_date || 0);
+          const dateB = new Date(b.contact_date || 0);
+          return dateB.getTime() - dateA.getTime(); // Sort descending (newest first)
+        })
+        .map((item: Supplier, index: number) => ({
+          uid: item.uid || `business-${index}`,
+          companyName: item.supplier_name || 'N/A',
+          contactName: item.sales_person || 'N/A', 
+          email: item.email || 'N/A',
+          address: item.address || 'N/A',
+          city: item.city || 'N/A',
+          remark: item.remark || 'N/A',
+          phone: item.telephone || 'N/A',
+          employees: item.head_count.toString() || 'N/A',
+          type_id: item.type_id || 0,
+          status: item.StatusList[0]?.name || 'Active',
+          createdAt: item.contact_date || new Date().toISOString(),
+          MediaList: item.MediaList || []
+        })) : [];
       
       setBusinesses(transformedData);
       setError(null);
@@ -134,12 +140,34 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     try {
       const response = refetchSaveData && await refetchSaveData();
       if (response.Success) {
-        console.log(response);
+        //console.log(response);
         setShowSidebar(false);
         setShowAlertPopup(true);
         setAlertPopupType('success');
         setAlertPopupTitle('บันทึกข้อมูลสำเร็จ');
         setAlertPopupText('บันทึกข้อมูลสำเร็จ');
+        // Reset form and close sidebar
+        setNewBusiness({
+          uid: '',
+          supplier_name: '',
+          sales_person: '',
+          email: '',
+          telephone: '',
+          head_count: 0,
+          type_id: 0,
+          address: '',
+          city: '', 
+          remark: '',
+          media_remark: '',
+          MediaList: [],
+          StatusList: [],
+          type_name: '',
+          contact_date: '',
+          update_time: '',
+          business_type: '',
+          is_active: true,
+        });
+        refetchBusinesses();
       } else {
         setShowSidebar(false);
         setShowAlertPopup(true);
@@ -147,34 +175,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         setAlertPopupTitle('บันทึกข้อมูลไม่สำเร็จ');
         setAlertPopupText('บันทึกข้อมูลไม่สำเร็จ');
       }
-      // Reset form and close sidebar
-      setNewBusiness({
-        uid: '',
-        supplier_name: '',
-        sales_person: '',
-        email: '',
-        telephone: '',
-        head_count: 0,
-        type_id: 0,
-        address: '',
-        city: '', 
-        remark: '',
-        media_remark: '',
-        MediaList: [],
-        StatusList: [],
-        type_name: '',
-        contact_date: '',
-        update_time: '',
-        business_type: '',
-        is_active: true,
-      });
+      
     } catch (error) {
       console.error('Error saving business:', error);
     }
   };
 
   const handleEditBusiness = (business: Business) => {
-    console.log(business);
+    //console.log(business);
     setEditBusiness(business);
     setShowEditModal(true);
   };
