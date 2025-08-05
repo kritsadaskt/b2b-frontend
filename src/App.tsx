@@ -8,6 +8,7 @@ import { useGetData } from './hooks/getData';
 import { Supplier } from './utils/types';
 import Footer from './components/Footer';
 import RegisterLeadForm from './components/RegisterLeadForm';
+import HeroBanner from './components/HeroBanner';
 
 function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,25 +158,7 @@ function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-[#123F6D] to-[#1a5591] text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            GET YOUR EMPLOYEES
-            <span className="block text-[#F1683B]">BENEFITS</span>
-          </h2>
-          <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
-            Exclusive discounts for employees of partner companies
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#search" className="bg-[#F1683B] hover:bg-[#e5572f] text-white px-8 py-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-105">
-              ตรวจสอบสิทธิ์
-            </a>
-            <a href="#partner" className="bg-transparent border-2 border-white hover:bg-white hover:text-[#123F6D] text-white px-8 py-4 rounded-lg font-medium transition-all duration-300">
-              สมัครเป็นพาร์ทเนอร์
-            </a>
-          </div>
-        </div>
-      </section>
+      <HeroBanner />
 
       {/* Search Section */}
       <section id="search" className="pt-10 pb-5 lg:py-10 bg-gray-50">
