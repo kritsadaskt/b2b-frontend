@@ -111,6 +111,6 @@
 
 #info {
   background-color: #f6fbfb;
-  background-image: url('./images/b2b-info-bg-d.webp');
+  background-image: url('./assets/images/b2b-info-bg-d.webp');
   @apply bg-cover bg-center;
 }
