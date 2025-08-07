@@ -8,6 +8,11 @@ export default {
       },
       colors: {
         accent: '#F1683B',
+        navyblue: '#0f3da0',
+      },
+      container: {
+        center: true,
+        padding: '1rem',
       },
     },
   },

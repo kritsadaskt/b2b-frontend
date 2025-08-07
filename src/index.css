@@ -108,3 +108,9 @@
     font-family: 'DBHeavent', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   }
 }
+
+#info {
+  background-color: #f6fbfb;
+  background-image: url('./images/b2b-info-bg-d.webp');
+  @apply bg-cover bg-center;
+}
