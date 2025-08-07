@@ -1,6 +1,6 @@
 function Info() {
   return (
-    <section id="info" className="py-16 min-h-[500px]">
+    <section id="info" className="py-16 min-h-[600px] flex items-center">
       <div className="container">
         <div className="flex flex-col md:flex-row gap-7 items-center">
           <div className="w-full md:w-1/2">
