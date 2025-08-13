@@ -6,14 +6,14 @@ interface DataResponse {
 }
 
 interface UseGetDataResult {
-  data: Supplier[];
+  data: any[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
 }
 
 export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
-  const [data, setData] = useState<Supplier[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +66,7 @@ interface UseGetSupplierTypeListResult {
   refetch: () => Promise<void>;
 }
 
-export const useGetSupplierTypeList = (): UseGetSupplierTypeListResult => {
+export const useGetSupplierTypeList = (returnOnlyName: boolean = false): UseGetSupplierTypeListResult => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +87,11 @@ export const useGetSupplierTypeList = (): UseGetSupplierTypeListResult => {
       }
 
       const result = await response.json();
-      setData(result.Data || []);
+      if (returnOnlyName) {
+        setData((result.Data || []).map((item: any) => item.supplier_name));
+      } else {
+        setData(result.Data || []);
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while fetching supplier type list');
@@ -99,7 +103,7 @@ export const useGetSupplierTypeList = (): UseGetSupplierTypeListResult => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [returnOnlyName]);
 
   return {
     data,

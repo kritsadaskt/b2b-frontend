@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Search, Building2, Users, CheckCircle, ArrowRight, Mail, Phone, MapPin } from 'lucide-react';
+import { Search, Building2, Users, CheckCircle, ArrowRight } from 'lucide-react';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import { authService } from './utils/auth';
@@ -34,7 +34,7 @@ function HomePage() {
       second: '2-digit'
     })
   });
-  const { data: availableCompanies, loading, error } = useGetData(searchQuery);
+  const { data: availableCompanies } = useGetData(searchQuery);
   const [isSending, setIsSending] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');

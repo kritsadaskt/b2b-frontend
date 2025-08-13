@@ -16,7 +16,12 @@ export const createApiUrl = (endpoint: string): string => {
   return `${API_BASE_URL}${endpoint}`;
 };
 
-export const apiHeaders = {
-  'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
-  'Content-Type': 'application/x-www-form-urlencoded',
+import { getApiCredentials } from './security';
+
+export const getApiHeaders = () => {
+  const { authorization } = getApiCredentials();
+  return {
+    'Authorization': authorization,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
 }; 
