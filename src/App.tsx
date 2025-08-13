@@ -11,6 +11,7 @@ import RegisterLeadForm from './components/RegisterLeadForm';
 import HeroBanner from './components/HeroBanner';
 import Info from './components/Info';
 import Header from './components/Header';
+import AlertPopup from './components/AlertPopup';
 
 function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,9 +24,22 @@ function HomePage() {
     email: '',
     phone: '',
     employees: '',
-    industry: ''
+    industry: '',
+    timestamp: new Date().toLocaleString('th-TH', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
   });
   const { data: availableCompanies, loading, error } = useGetData(searchQuery);
+  const [isSending, setIsSending] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState<'success' | 'error'>('success');
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   // Filter companies based on search query
   const filteredCompanies = availableCompanies.filter((company: Supplier) =>
@@ -97,14 +111,56 @@ function HomePage() {
 
   const handleBusinessSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Thank you for your submission! We will contact you within 24 hours.');
+    setIsSending(true);
     setBusinessForm({
       companyName: '',
       contactName: '',
       email: '',
       phone: '',
       employees: '',
-      industry: ''
+      industry: '',
+      timestamp: new Date().toISOString()
+    });
+    // Send form data to API endpoint
+    fetch('https://node.assetwise.dev/webhook-test/send-b2b-mail', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(businessForm)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Show success modal
+      setAlertType('success');
+      setAlertTitle('ส่งข้อมูลสำเร็จ');
+      setAlertMessage('เราจะติดต่อกลับภายใน 24 ชั่วโมง');
+      setShowAlert(true);
+      
+      // Reset form
+      setBusinessForm({
+        companyName: '',
+        contactName: '', 
+        email: '',
+        phone: '',
+        employees: '',
+        industry: '',
+        timestamp: new Date().toISOString()
+      });
+      setIsSending(false);
+    })
+    .catch(error => {
+      // Show error modal
+      setAlertType('error');
+      setAlertTitle('เกิดข้อผิดพลาด');
+      setAlertMessage('เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง');
+      setShowAlert(true);
+      console.error('Error:', error);
     });
   };
 
@@ -215,7 +271,7 @@ function HomePage() {
           {searchResult && (
             <div className="max-w-2xl mx-auto">
               {searchResult === 'available' ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-6 md:p-6 text-center">
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 pt-4 pb-6 md:px-6 md:py-10 text-center">
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h4 className="text-xl font-semibold text-green-800 mb-2">พบข้อมูล</h4>
                   <h5 className="text-green-700 text-xl mb-4">บริษัท <strong>{searchQuery}</strong></h5>
@@ -309,7 +365,7 @@ function HomePage() {
               สมัครเป็นพาร์ทเนอร์กับ AssetWise
             </h3>
             <p className="text-lg text-gray-600">
-              Submit your business information to discuss partnership opportunities and employee benefits
+              กรอกข้อมูลบริษัทเพื่อสมัครเป็นพาร์ทเนอร์กับ AssetWise
             </p>
           </div>
 
@@ -406,9 +462,10 @@ function HomePage() {
 
               <button
                 type="submit"
-                className="w-full bg-[#F1683B] hover:bg-[#e5572f] text-white py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02]"
+                className="w-full bg-[#F1683B] hover:bg-[#e5572f] text-white py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSending}
               >
-                ส่งข้อมูล
+                {isSending ? 'กำลังส่งข้อมูล...' : 'ส่งข้อมูล'}
               </button>
             </form>
           </div>
@@ -417,6 +474,17 @@ function HomePage() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Alert Popup */}
+      {showAlert && (
+        <AlertPopup
+          popup_type={alertType}
+          popup_title={alertTitle}
+          popup_text={alertMessage}
+          onCancel={() => setShowAlert(false)}
+          onConfirm={() => setShowAlert(false)}
+        />
+      )}
     </>
   );
 }
