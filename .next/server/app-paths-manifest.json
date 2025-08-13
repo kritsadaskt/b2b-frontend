@@ -1,0 +1,4 @@
+{
+  "/api/Suplier/GetSuplier/route": "app/api/Suplier/GetSuplier/route.js",
+  "/page": "app/page.js"
+}
