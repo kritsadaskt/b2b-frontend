@@ -1,27 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Building2, X, Search, SquarePen } from 'lucide-react';
+import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload } from 'lucide-react';
 import { authService } from '../utils/auth';
-import { Supplier } from '../utils/types';
+import { Supplier, Business } from '../utils/types';
 import { useGetData, useGetSupplierMediaTypeList, useGetSupplierTypeList } from '../hooks/getData';
 import Select from 'react-select';
 import { useSaveData } from '../hooks/saveData';
 import AlertPopup from './AlertPopup';
-
-interface Business {
-  uid: string;
-  companyName: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  employees: string;
-  type_id: number;
-  StatusList?: string;
-  createdAt?: string;
-  address?: string;
-  city?: string;
-  remark?: string;
-  MediaList?: { id: number }[];
-}
+import CsvUploadDialog from '../components/CsvUploadDialog';
 
 interface DataResponse {
   Data: Supplier[];
@@ -58,17 +43,55 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     business_type: '',
     is_active: true,
   });
-  const [editBusiness, setEditBusiness] = useState<Business | null>(null);
+  const [editBusiness, setEditBusiness] = useState<Business>({
+    uid: '',
+    companyName: '',
+    contactName: '',
+    email: '',
+    phone: '',
+    employees: '',
+    type_id: 0,
+    address: '',
+    city: '',
+    remark: '',
+    status: '',
+    createdAt: '',
+    MediaList: [],
+  });
   const [showAlertPopup, setShowAlertPopup] = useState(false);
   const [alertPopupType, setAlertPopupType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
   const [alertPopupTitle, setAlertPopupTitle] = useState('');
   const [alertPopupText, setAlertPopupText] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showCsvUploadDialog, setShowCsvUploadDialog] = useState(false);
 
   const { data: bussinessData, loading: loadingData, error: errorData, refetch: refetchBusinesses } = useGetData();
   const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
   const { data: supplierMediaTypeList, loading: loadingSupplierMediaTypeList, error: errorSupplierMediaTypeList, refetch: refetchSupplierMediaTypeList } = useGetSupplierMediaTypeList();
   const saveDataResult = useSaveData(newBusiness);
+  const updateDataResult = useSaveData({
+    ...newBusiness,
+    supplier_name: editBusiness.companyName,
+    sales_person: editBusiness.contactName,
+    telephone: editBusiness.phone,
+    head_count: parseInt(editBusiness.employees) || 0,
+    uid: editBusiness.uid,
+    email: editBusiness.email,
+    address: editBusiness.address,
+    city: editBusiness.city,
+    remark: editBusiness.remark,
+    type_id: editBusiness.type_id,
+    MediaList: editBusiness.MediaList,
+    StatusList: [],
+    type_name: '',
+    contact_date: editBusiness.createdAt,
+    update_time: new Date().toISOString(),
+    business_type: '',
+    is_active: true,
+    media_remark: ''
+  });
   const { data: saveData = [], loading: loadingSaveData = false, error: errorSaveData = null, refetch: refetchSaveData } = saveDataResult || {};
+  const { data: updateData = [], loading: loadingUpdateData = false, error: errorUpdateData = null, refetch: refetchUpdateData } = updateDataResult || {};
 
 
   useEffect(() => {
@@ -122,7 +145,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           status: item.StatusList[0]?.name || 'Active',
           createdAt: item.contact_date || new Date().toISOString(),
           MediaList: item.MediaList || []
-        })) : [];
+        } as Business)) : [];
       
       setBusinesses(transformedData);
       setError(null);
@@ -181,10 +204,49 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const handleEditBusiness = (business: Business) => {
-    //console.log(business);
-    setEditBusiness(business);
-    setShowEditModal(true);
+  const handleEditBusinessSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    console.log(editBusiness);
+    //return;
+
+    try {
+      const response = refetchUpdateData && await refetchUpdateData();
+      if (response.Success) {
+        //console.log(response);
+        setShowEditModal(false);
+        setShowAlertPopup(true);
+        setAlertPopupType('success');
+        setAlertPopupTitle('อัปเดตข้อมูลสำเร็จ');
+        setAlertPopupText('อัปเดตข้อมูลสำเร็จ');
+        // Reset edit form
+        setEditBusiness({
+          uid: '',
+          companyName: '',
+          contactName: '',
+          email: '',
+          phone: '',
+          employees: '',
+          type_id: 0,
+          address: '',
+          city: '',
+          remark: '',
+          status: '',
+          createdAt: '',
+          MediaList: [],
+        });
+        refetchBusinesses();
+      } else {
+        setShowEditModal(false);
+        setShowAlertPopup(true);
+        setAlertPopupType('error');
+        setAlertPopupTitle('อัปเดตข้อมูลไม่สำเร็จ');
+        setAlertPopupText('อัปเดตข้อมูลไม่สำเร็จ');
+      }
+      
+    } catch (error) {
+      console.error('Error updating business:', error);
+    }
   };
 
   const filteredBusinesses = businesses.filter(business =>
@@ -223,13 +285,43 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <div>
             <h2 className="text-3xl font-bold text-[#123F6D]">ระบบจัดการข้อมูลบริษัท</h2>
           </div>
-          <button
-            onClick={() => setShowSidebar(true)}
-            className="bg-[#F1683B] hover:bg-[#e5572f] text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all duration-300 transform hover:scale-105"
-          >
-            <Plus className="h-5 w-5" />
-            <span>เพิ่ม</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="bg-[#F1683B] hover:bg-[#e5572f] text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="h-5 w-5" />
+              <span>เพิ่ม</span>
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowSidebar(true);
+                      setShowDropdown(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>เพิ่มรายการเดียว</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCsvUploadDialog(true);
+                      setShowDropdown(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>อัพโหลด CSV</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -329,17 +421,20 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            business.StatusList === 'Active' 
+                            business.status === 'Active' 
                               ? 'bg-green-100 text-green-800'
-                              : business.StatusList === 'Pending'
+                              : business.status === 'Pending'
                               ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {business.StatusList || 'Active'}
+                            {business.status || 'Active'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <button onClick={() => handleEditBusiness(business)} className="px-4 py-2 text-accent rounded-full hover:bg-gray-200 font-semibold transition-all duration-300">
+                          <button onClick={() => {
+                            setShowEditModal(true);
+                            setEditBusiness(business);
+                          }} className="px-4 py-2 text-accent rounded-full hover:bg-gray-200 font-semibold transition-all duration-300">
                             <SquarePen className="h-5 w-5" />
                           </button>
                         </td>
@@ -572,8 +667,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             
             <form onSubmit={(e) => {
               e.preventDefault();
-              // Handle edit submission here
-              console.log(editBusiness);
+              handleEditBusinessSubmit(e);
               setShowEditModal(false);
             }} className="p-6 space-y-6">
               <div>
@@ -716,7 +810,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   onChange={(selectedOptions) => {
                     setEditBusiness({
                       ...editBusiness,
-                      MediaList: selectedOptions.map(option => ({ id: option.value }))
+                      MediaList: selectedOptions.map(option => ({ id: option.value, name: option.label }))
                     });
                   }}
                   options={supplierMediaTypeList.map(type => ({
@@ -757,17 +851,19 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 >
                   ยกเลิก
                 </button>
-                <button
-                  type="submit"
-                  disabled
-                  className="px-6 py-3 bg-[#F1683B] hover:bg-[#e5572f] text-white rounded-lg font-semibold transition-all duration-300 opacity-50 cursor-not-allowed"
-                >
+                <button type="submit" className="px-6 py-3 bg-[#F1683B] hover:bg-[#e5572f] text-white rounded-lg font-semibold transition-all duration-300">
                   บันทึก
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {showCsvUploadDialog && (
+        <CsvUploadDialog
+          onClose={() => setShowCsvUploadDialog(false)}
+        />
       )}
 
       {showAlertPopup && (

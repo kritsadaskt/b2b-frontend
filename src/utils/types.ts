@@ -30,6 +30,23 @@ export interface Supplier {
   MediaList: Media[];
 }
 
+// Interface for transformed business data used in AdminDashboard
+export interface Business {
+  uid: string;
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  employees: string;
+  type_id: number;
+  address: string;
+  city: string;
+  remark: string;
+  status: string;
+  createdAt: string;
+  MediaList: Media[];
+}
+
 export interface B2bLead {
   fname: string;
   tel: string;

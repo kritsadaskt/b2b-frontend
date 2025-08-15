@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     proxy: {
       '/api': {
-        target: 'https://aswinno.assetwise.co.th/APIUAT',
+        target: 'https://api.assetwise.co.th/',
         changeOrigin: true,
         secure: true,
         configure: (proxy, _options) => {
@@ -47,8 +47,8 @@ export default defineConfig(({ mode }) => ({
     }
   },
   // Define environment variables that are safe to expose
-  define: {
-    'import.meta.env.VITE_API_USERNAME': JSON.stringify(process.env.VITE_API_USERNAME || 'supplier'),
-    'import.meta.env.VITE_API_PASSWORD': JSON.stringify(process.env.VITE_API_PASSWORD || 'supplier@2025'),
-  },
+  // define: {
+  //   'import.meta.env.VITE_API_USERNAME': JSON.stringify(process.env.VITE_API_USERNAME || 'supplier'),
+  //   'import.meta.env.VITE_API_PASSWORD': JSON.stringify(process.env.VITE_API_PASSWORD || 'supplier@2025'),
+  // },
 }));

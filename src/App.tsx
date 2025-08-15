@@ -163,40 +163,7 @@ function HomePage() {
       console.error('Error:', error);
     });
   };
-
-  const services = [
-    {
-      title: 'Financial Planning',
-      description: 'Comprehensive financial advisory services for your employees',
-      discount: '5-8%'
-    },
-    {
-      title: 'Investment Management',
-      description: 'Professional portfolio management with reduced fees',
-      discount: '10%'
-    },
-    {
-      title: 'Insurance Services',
-      description: 'Group insurance plans with corporate discounts',
-      discount: '7-12%'
-    },
-    {
-      title: 'Tax Consultation',
-      description: 'Expert tax advice and preparation services',
-      discount: '5-10%'
-    },
-    {
-      title: 'Estate Planning',
-      description: 'Comprehensive estate planning and legal services',
-      discount: '8-15%'
-    },
-    {
-      title: 'Retirement Planning',
-      description: '401k optimization and retirement strategy consulting',
-      discount: '5-12%'
-    }
-  ];
-
+  
   return (
     <>
       {/* Header */}
@@ -294,66 +261,6 @@ function HomePage() {
               )}
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" className="py-20 hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl md:text-4xl font-bold text-[#123F6D] mb-4">
-              Exclusive Employee Benefits
-            </h3>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              We offer comprehensive financial services with special discounts for employees of our partner companies. 
-              Active employees can save 5-15% on professional financial advisory services.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((service, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:border-[#123F6D]">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-semibold text-[#123F6D]">{service.title}</h4>
-                  <span className="bg-[#F1683B] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    {service.discount} OFF
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-4">{service.description}</p>
-                <div className="flex items-center text-[#123F6D] font-semibold">
-                  <Users className="h-4 w-4 mr-2" />
-                  <span className="text-sm">For verified employees only</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 bg-[#123F6D] rounded-2xl p-8 text-white text-center">
-            <h4 className="text-2xl font-bold mb-4">How It Works</h4>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="bg-[#F1683B] rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold">1</span>
-                </div>
-                <h5 className="font-semibold mb-2">Verify Employment</h5>
-                <p className="text-blue-100">Show proof of employment at a partner company</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-[#F1683B] rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold">2</span>
-                </div>
-                <h5 className="font-semibold mb-2">Choose Services</h5>
-                <p className="text-blue-100">Select from our comprehensive financial services</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-[#F1683B] rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold">3</span>
-                </div>
-                <h5 className="font-semibold mb-2">Get Discounts</h5>
-                <p className="text-blue-100">Enjoy 5-15% savings on all selected services</p>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 

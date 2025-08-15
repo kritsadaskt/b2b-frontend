@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { B2bLead } from "../utils/types";
+import Select from "react-select";
+import { projectData } from "../utils/projectData";
 
 function RegisterLeadForm() {
   const [leadData, setLeadData] = useState<B2bLead>({
@@ -85,14 +87,14 @@ function RegisterLeadForm() {
         <label htmlFor="interestedProject" className="block text-gray-600 mb-2 text-sm">
           โครงการที่สนใจ
         </label>
-        <input
-          type="number"
-          id="interestedProject"
-          name="interestedProject"
-          value={leadData.interestedProject}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-          required
+        <Select 
+          options={projectData}
+          onChange={(selectedOption) => setLeadData({ ...leadData, interestedProject: selectedOption?.ProjectID || 0 })}
+          value={projectData.find((project) => project.ProjectID === leadData.interestedProject) || null}
+          onInputChange={(inputValue) => setLeadData({ ...leadData, interestedProject: parseInt(inputValue) })}
+          getOptionLabel={(option) => option.ProjectName}
+          getOptionValue={(option) => option.ProjectID.toString()}
+          placeholder="เลือกโครงการ"
         />
       </div>
 

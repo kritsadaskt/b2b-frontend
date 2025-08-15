@@ -6,7 +6,7 @@ const getApiBaseUrl = (): string => {
   }
   
   // In production, use the direct API URL
-  return 'https://aswinno.assetwise.co.th/APIUAT';
+  return 'https://api.assetwise.co.th/';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -16,10 +16,9 @@ export const createApiUrl = (endpoint: string): string => {
   return `${API_BASE_URL}${endpoint}`;
 };
 
-import { getApiCredentials } from './security';
 
 export const getApiHeaders = () => {
-  const { authorization } = getApiCredentials();
+  const { authorization } = { authorization: 'Basic ' };
   return {
     'Authorization': authorization,
     'Content-Type': 'application/x-www-form-urlencoded',
