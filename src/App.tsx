@@ -122,7 +122,7 @@ function HomePage() {
       timestamp: new Date().toISOString()
     });
     // Send form data to API endpoint
-    fetch('https://node.assetwise.dev/webhook-test/send-b2b-mail', {
+    fetch('https://node.assetwise.dev/webhook/send-b2b-mail', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -242,9 +242,7 @@ function HomePage() {
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h4 className="text-xl font-semibold text-green-800 mb-2">พบข้อมูล</h4>
                   <h5 className="text-green-700 text-xl mb-4">บริษัท <strong>{searchQuery}</strong></h5>
-                  <p className="text-green-700">กรุณากรอกข้อมูลด้านล่างเพื่อยืนยันรับสิทธิ์</p>
-                  <hr className="my-7 border-green-500 w-1/3 mx-auto border-2" />
-                  <RegisterLeadForm />
+                  <p className="text-green-700">กรุณาติดต่อเจ้าหน้าที่โชว์รูมโครงการเพื่อรับสิทธิ์</p>
                 </div>
               ) : (
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
