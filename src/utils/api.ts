@@ -18,9 +18,9 @@ export const createApiUrl = (endpoint: string): string => {
 
 
 export const getApiHeaders = () => {
-  const { authorization } = { authorization: 'Basic ' };
+  const { authorization } = { authorization: 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=' };
   return {
     'Authorization': authorization,
-    'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Type': 'application/json',
   };
 }; 
