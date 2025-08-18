@@ -26,9 +26,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     proxy: {
       '/api': {
-        target: 'https://api.assetwise.co.th/',
+        target: 'https://api.assetwise.co.th',
         changeOrigin: true,
         secure: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
         configure: (proxy, _options) => {
           // Only log proxy details in development
           if (mode === 'development') {
