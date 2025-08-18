@@ -7,6 +7,7 @@ import Select from 'react-select';
 import { useSaveData } from '../hooks/saveData';
 import AlertPopup from './AlertPopup';
 import CsvUploadDialog from '../components/CsvUploadDialog';
+import ApiTest from './ApiTest';
 
 interface DataResponse {
   Data: Supplier[];
@@ -875,6 +876,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           onConfirm={() => setShowAlertPopup(false)}
         />
       )}
+
+      {/* API Test Component - Remove this after debugging */}
+      <div className="mt-8">
+        <ApiTest />
+      </div>
 
     </div>
   );

@@ -1,8 +1,20 @@
-import { X, Upload, FileText, FileSpreadsheet } from "lucide-react";
-import { useState } from "react";
+import React, { useState, useCallback } from 'react';
+import { X, Upload, FileText, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { useSaveData } from "../hooks/saveData";
-import { Supplier } from "../utils/types";
+import { Supplier } from '../utils/types';
+import { getApiHeaders } from '../utils/api';
+
+// Fallback function to get the correct API URL
+const getApiUrl = (endpoint: string): string => {
+  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  if (isDevelopment) {
+    return `/api/${endpoint}`;
+  }
+  
+  // In production, use the full URL
+  return `https://api.assetwise.co.th/${endpoint}`;
+};
 
 interface CsvUploadDialogProps {
   onClose: () => void;
@@ -249,26 +261,25 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     console.log('=== END PREVIEW ===');
     
     // Start uploading data to API
-    uploadSuppliersToAPI(suppliers);
+    uploadSuppliers(suppliers);
   };
 
-  const uploadSuppliersToAPI = async (suppliers: Supplier[]) => {
+  const uploadSuppliers = async (suppliers: Supplier[]) => {
     setIsUploading(true);
     setErrorRow(null);
     setUploadProgress({ current: 0, total: suppliers.length });
-
-    const header = new Headers();
-    header.append("Authorization", "Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=");
-    header.append("Content-Type", "application/json");
 
     for (let i = 0; i < suppliers.length; i++) {
       const supplier = suppliers[i];
       setUploadProgress({ current: i + 1, total: suppliers.length });
 
       try {
-        const response = await fetch('/api/Suplier/SaveSuplier', {
+        const apiUrl = getApiUrl('Suplier/SaveSuplier');
+        console.log('Uploading supplier to:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
           method: 'POST',
-          headers: header,
+          headers: getApiHeaders(),
           body: JSON.stringify(supplier)
         });
 
@@ -476,7 +487,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
              <button 
                onClick={() => {
                  setErrorRow(null);
-                 uploadSuppliersToAPI(preparedSuppliers);
+                 uploadSuppliers(preparedSuppliers);
                }}
                className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300"
              >
