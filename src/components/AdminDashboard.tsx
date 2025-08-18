@@ -8,6 +8,7 @@ import { useSaveData } from '../hooks/saveData';
 import AlertPopup from './AlertPopup';
 import CsvUploadDialog from '../components/CsvUploadDialog';
 import ApiTest from './ApiTest';
+import FunctionTest from './FunctionTest';
 
 interface DataResponse {
   Data: Supplier[];
@@ -880,6 +881,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       {/* API Test Component - Remove this after debugging */}
       <div className="mt-8">
         <ApiTest />
+      </div>
+
+      {/* Function Test Component - Remove this after debugging */}
+      <div className="mt-8">
+        <FunctionTest />
       </div>
 
     </div>

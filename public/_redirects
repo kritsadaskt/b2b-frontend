@@ -1,2 +1,8 @@
+# Netlify function proxy (primary)
 /api/*  /.netlify/functions/api-proxy/:splat  200
+
+# Alternative direct proxy (fallback)
+/api-direct/*  https://api.assetwise.co.th/:splat  200!
+
+# SPA routing
 /*      /index.html   200
