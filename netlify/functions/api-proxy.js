@@ -1,116 +1,93 @@
-const fetch = require('node-fetch');
+// Use Node 18+ global fetch
 
-exports.handler = async (event, context) => {
-  console.log('Function called with:', {
-    method: event.httpMethod,
-    path: event.path,
-    headers: event.headers,
-    body: event.body
-  });
+exports.handler = async (event, _context) => {
+	try {
+		// Handle CORS preflight
+		if (event.httpMethod === 'OPTIONS') {
+			return {
+				statusCode: 200,
+				headers: {
+					'Access-Control-Allow-Origin': '*',
+					'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+					'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+					'Access-Control-Allow-Credentials': 'true',
+				},
+				body: '',
+			};
+		}
 
-  // Handle CORS preflight requests
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Credentials': 'true',
-      },
-      body: '',
-    };
-  }
+		// Derive API path (strip function prefix)
+		let path = event.path || '';
+		if (path.startsWith('/.netlify/functions/api-proxy/')) {
+			path = path.replace('/.netlify/functions/api-proxy/', '');
+		} else if (path.startsWith('/api-proxy/')) {
+			path = path.replace('/api-proxy/', '');
+		}
+		path = path.replace(/^\//, '');
 
-  try {
-    // Get the endpoint from the URL path
-    let path = event.path;
-    
-    // Remove the function path prefix
-    if (path.startsWith('/.netlify/functions/api-proxy/')) {
-      path = path.replace('/.netlify/functions/api-proxy/', '');
-    } else if (path.startsWith('/api-proxy/')) {
-      path = path.replace('/api-proxy/', '');
-    }
-    
-    // Remove leading slash if present
-    path = path.replace(/^\//, '');
-    
-    const apiUrl = `https://api.assetwise.co.th/${path}`;
-    console.log('Proxying to:', apiUrl);
+		// Append query string if present
+		const qsObj = event.queryStringParameters || {};
+		const qs = Object.keys(qsObj).length
+			? '?' + new URLSearchParams(qsObj).toString()
+			: '';
 
-    // Prepare headers
-    const headers = {
-      'Content-Type': event.headers['content-type'] || 'application/json',
-      'Authorization': event.headers.authorization || 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
-      'User-Agent': 'Netlify-Function-Proxy/1.0',
-    };
+		const apiUrl = `https://api.assetwise.co.th/${path}${qs}`;
 
-    // Prepare request options
-    const requestOptions = {
-      method: event.httpMethod,
-      headers,
-      timeout: 10000, // 10 second timeout
-    };
+		// Prepare headers: forward most incoming headers
+		const incoming = event.headers || {};
+		const headers = new Headers();
+		// Preserve content-type if present
+		if (incoming['content-type']) headers.set('Content-Type', incoming['content-type']);
+		// Forward Authorization or fallback to Basic
+		headers.set(
+			'Authorization',
+			incoming['authorization'] || 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU='
+		);
+		// Optional: forward user-agent
+		headers.set('User-Agent', incoming['user-agent'] || 'Netlify-Function-Proxy/1.0');
 
-    // Add body for POST/PUT requests
-    if (event.body && ['POST', 'PUT', 'PATCH'].includes(event.httpMethod)) {
-      requestOptions.body = event.body;
-      console.log('Request body:', event.body);
-    }
+		// Body handling (supports base64-encoded bodies)
+		let body = undefined;
+		const method = event.httpMethod || 'GET';
+		if (event.body && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+			body = event.isBase64Encoded
+				? Buffer.from(event.body, 'base64')
+				: event.body;
+		}
 
-    console.log('Making request with options:', {
-      url: apiUrl,
-      method: requestOptions.method,
-      headers: requestOptions.headers
-    });
+		const response = await fetch(apiUrl, {
+			method,
+			headers,
+			body,
+		});
 
-    // Make the request to the actual API
-    const response = await fetch(apiUrl, requestOptions);
-    const data = await response.text();
-    
-    console.log('API response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
-      dataLength: data.length
-    });
+		const text = await response.text();
+		const contentType = response.headers.get('content-type') || 'application/json';
 
-    // Return the response with CORS headers
-    return {
-      statusCode: response.status,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Credentials': 'true',
-        'Content-Type': response.headers.get('content-type') || 'application/json',
-        'Cache-Control': 'no-cache',
-      },
-      body: data,
-    };
-  } catch (error) {
-    console.error('Proxy error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      code: error.code
-    });
-    
-    return {
-      statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Credentials': 'true',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message,
-        timestamp: new Date().toISOString()
-      }),
-    };
-  }
+		return {
+			statusCode: response.status,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+				'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+				'Access-Control-Allow-Credentials': 'true',
+				'Content-Type': contentType,
+				'Cache-Control': 'no-cache',
+			},
+			body: text,
+		};
+	} catch (error) {
+		return {
+			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				error: 'Internal server error',
+				message: error?.message || String(error),
+				timestamp: new Date().toISOString(),
+			}),
+		};
+	}
 };

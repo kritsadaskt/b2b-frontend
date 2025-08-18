@@ -8,12 +8,7 @@
 [functions]
   node_bundler = "esbuild"
 
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api-proxy/:splat"
-  status = 200
-  force = true
-
+# SPA fallback (API handled by public/_redirects)
 [[redirects]]
   from = "/*"
   to = "/index.html"

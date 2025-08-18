@@ -2,19 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { X, Upload, FileText, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Supplier } from '../utils/types';
-import { getApiHeaders } from '../utils/api';
-
-// Fallback function to get the correct API URL
-const getApiUrl = (endpoint: string): string => {
-  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  
-  if (isDevelopment) {
-    return `/api/${endpoint}`;
-  }
-  
-  // In production, use the Netlify function proxy to avoid CORS
-  return `/.netlify/functions/api-proxy/${endpoint}`;
-};
+import { getApiHeaders, createApiUrl } from '../utils/api';
 
 interface CsvUploadDialogProps {
   onClose: () => void;
@@ -274,10 +262,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
       setUploadProgress({ current: i + 1, total: suppliers.length });
 
       try {
-        const apiUrl = getApiUrl('Suplier/SaveSuplier');
-        console.log('Uploading supplier to:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
+        const response = await fetch(createApiUrl('Suplier/SaveSuplier'), {
           method: 'POST',
           headers: getApiHeaders(),
           body: JSON.stringify(supplier)

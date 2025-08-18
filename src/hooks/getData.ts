@@ -13,18 +13,6 @@ interface UseGetDataResult {
   refetch: () => Promise<void>;
 }
 
-// Fallback function to get the correct API URL
-const getApiUrl = (endpoint: string): string => {
-  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  
-  if (isDevelopment) {
-    return `/api/${endpoint}`;
-  }
-  
-  // In production, use the Netlify function proxy to avoid CORS
-  return `/.netlify/functions/api-proxy/${endpoint}`;
-};
-
 export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,10 +24,7 @@ export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
 
     try {
       setLoading(true);
-      const apiUrl = getApiUrl('Suplier/GetSuplier');
-      console.log('Fetching data from:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
+      const response = await fetch(createApiUrl('Suplier/GetSuplier'), {
         method: 'POST',
         headers: {
           ...getApiHeaders(),
@@ -90,10 +75,7 @@ export const useGetSupplierTypeList = (returnOnlyName: boolean = false): UseGetS
   const fetchData = async () => {
     try {
       setLoading(true);
-      const apiUrl = getApiUrl('Suplier/GetSuplierTypeList');
-      console.log('Fetching supplier type list from:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
+      const response = await fetch(createApiUrl('Suplier/GetSuplierTypeList'), {
         method: 'GET',
         headers: {
           ...getApiHeaders(),
@@ -147,10 +129,7 @@ export const useGetSupplierStatusList = (): UseGetSupplierStatusListResult => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const apiUrl = getApiUrl('Suplier/GetSuplierStatusList');
-      console.log('Fetching supplier status list from:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
+      const response = await fetch(createApiUrl('Suplier/GetSuplierStatusList'), {
         method: 'GET',
         headers: {
           ...getApiHeaders(),
@@ -200,10 +179,7 @@ export const useGetSupplierMediaTypeList = (): UseGetSupplierMediaTypeListResult
   const fetchData = async () => {
     try {
       setLoading(true);
-      const apiUrl = getApiUrl('Suplier/GetSuplierMediaTypeList');
-      console.log('Fetching supplier media type list from:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
+      const response = await fetch(createApiUrl('Suplier/GetSuplierMediaTypeList'), {
         method: 'GET',
         headers: {
           ...getApiHeaders(),
