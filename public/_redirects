@@ -1,5 +1,6 @@
 # Proxy API requests server-side to avoid CORS
 /api/*  https://api.assetwise.co.th/:splat  200!
+/proxy-check/*  https://httpbin.org/:splat  200
 
 # SPA fallback
 /*      /index.html   200
