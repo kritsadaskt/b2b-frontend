@@ -14,7 +14,8 @@ const getApiUrl = (endpoint: string): string => {
     return `/api/${endpoint}`;
   }
   
-  return `https://api.assetwise.co.th/${endpoint}`;
+  // In production, use the Netlify function proxy to avoid CORS
+  return `/.netlify/functions/api-proxy/${endpoint}`;
 };
 
 const ApiTest: React.FC = () => {

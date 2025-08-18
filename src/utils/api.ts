@@ -15,16 +15,16 @@ const getApiBaseUrl = (): string => {
     return '/api';
   }
   
-  // In production, use the direct API URL
-  console.log('Using production API URL: https://api.assetwise.co.th/');
-  return 'https://api.assetwise.co.th/';
+  // In production, use the Netlify function proxy to avoid CORS
+  console.log('Using production Netlify function proxy: /.netlify/functions/api-proxy');
+  return '/.netlify/functions/api-proxy';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
 
 // Helper function to create full API URLs
 export const createApiUrl = (endpoint: string): string => {
-  const fullUrl = `${API_BASE_URL}${endpoint}`;
+  const fullUrl = `${API_BASE_URL}/${endpoint}`;
   console.log('Creating API URL:', { endpoint, baseUrl: API_BASE_URL, fullUrl });
   return fullUrl;
 };

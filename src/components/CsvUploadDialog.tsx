@@ -12,8 +12,8 @@ const getApiUrl = (endpoint: string): string => {
     return `/api/${endpoint}`;
   }
   
-  // In production, use the full URL
-  return `https://api.assetwise.co.th/${endpoint}`;
+  // In production, use the Netlify function proxy to avoid CORS
+  return `/.netlify/functions/api-proxy/${endpoint}`;
 };
 
 interface CsvUploadDialogProps {
