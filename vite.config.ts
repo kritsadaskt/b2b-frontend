@@ -22,6 +22,21 @@ export default defineConfig(({ mode }) => ({
     } : undefined,
     // Disable source maps in production for security
     sourcemap: mode !== 'production',
+    // Configure chunk splitting for better performance
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunk for large libraries
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          // UI libraries
+          ui: ['lucide-react', 'react-select'],
+          // Utilities
+          utils: ['xlsx'],
+        },
+      },
+    },
+    // Increase chunk size warning limit to 600kb
+    chunkSizeWarningLimit: 600,
   },
   server: {
     proxy: {

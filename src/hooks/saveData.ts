@@ -7,6 +7,9 @@ export const useSaveData = (Supplier: Supplier) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // console.log(Supplier);
+  // return;
+
   const body = JSON.stringify(Supplier);
 
   const fetchData = async () => {

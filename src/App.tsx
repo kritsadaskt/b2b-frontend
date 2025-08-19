@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Search, Building2, Users, CheckCircle, ArrowRight } from 'lucide-react';
-import AdminLogin from './components/AdminLogin';
-import AdminDashboard from './components/AdminDashboard';
+import { Search, Building2, CheckCircle, ArrowRight } from 'lucide-react';
+
+// Lazy load admin components for code splitting
+const AdminLogin = React.lazy(() => import('./components/AdminLogin'));
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
+const SubmitLeadForm = React.lazy(() => import('./components/SubmitLeadForm'));
 import { authService } from './utils/auth';
 import { useGetData } from './hooks/getData';
 import { Supplier } from './utils/types';
 import Footer from './components/Footer';
-import RegisterLeadForm from './components/RegisterLeadForm';
+//import RegisterLeadForm from './components/RegisterLeadForm';
 import HeroBanner from './components/HeroBanner';
 import Info from './components/Info';
 import Header from './components/Header';
@@ -457,13 +460,23 @@ function App() {
           <Route 
             path="/admin" 
             element={
-              isAuthenticated ? (
-                <AdminDashboard onLogout={handleLogout} />
-              ) : (
-                <AdminLogin onLogin={handleLogin} error={loginError} />
-              )
+              <Suspense fallback={
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#123F6D] mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading...</p>
+                  </div>
+                </div>
+              }>
+                {isAuthenticated ? (
+                  <AdminDashboard onLogout={handleLogout} />
+                ) : (
+                  <AdminLogin onLogin={handleLogin} error={loginError} />
+                )}
+              </Suspense>
             } 
           />
+          <Route path="/submit" element={<SubmitLeadForm />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

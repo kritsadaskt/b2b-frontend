@@ -11,6 +11,7 @@ function RegisterLeadForm() {
     company: "",
     interestedProject: 0,
     media: "",
+    pdpaConsent: true,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,6 +112,41 @@ function RegisterLeadForm() {
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
           required
         />
+      </div>
+
+      <div className="mb-6">
+        <div className="flex items-start space-x-3">
+          <input
+            type="checkbox"
+            id="pdpaConsent"
+            name="pdpaConsent"
+            checked={leadData.pdpaConsent || false}
+            onChange={handleChange}
+            className="mt-1 h-4 w-4 text-[#123F6D] focus:ring-[#123F6D] border-gray-300 rounded"
+            required
+          />
+          <label htmlFor="pdpaConsent" className="text-sm text-gray-600 leading-relaxed">
+            ข้าพเจ้ายินยอมให้ AssetWise เก็บรวบรวม ใช้ และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้าตามวัตถุประสงค์ที่ระบุไว้ใน
+            <a 
+              href="/privacy-policy" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[#123F6D] hover:text-[#0f2f54] underline ml-1"
+            >
+              นโยบายความเป็นส่วนตัว
+            </a>
+            {" "}และ
+            <a 
+              href="/terms-conditions" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[#123F6D] hover:text-[#0f2f54] underline ml-1"
+            >
+              ข้อกำหนดและเงื่อนไข
+            </a>
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+        </div>
       </div>
 
       <button

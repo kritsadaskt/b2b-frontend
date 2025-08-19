@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload } from 'lucide-react';
 import { authService } from '../utils/auth';
 import { Supplier, Business } from '../utils/types';
-import { useGetData, useGetSupplierMediaTypeList, useGetSupplierTypeList } from '../hooks/getData';
+import { useGetData, useGetSupplierMediaTypeList, useGetSupplierStatusList, useGetSupplierTypeList } from '../hooks/getData';
 import Select from 'react-select';
 import { useSaveData } from '../hooks/saveData';
 import AlertPopup from './AlertPopup';
 import CsvUploadDialog from '../components/CsvUploadDialog';
-import ApiTest from './ApiTest';
-import FunctionTest from './FunctionTest';
+// import ApiTest from './ApiTest';
+// import FunctionTest from './FunctionTest';
 
 interface DataResponse {
   Data: Supplier[];
@@ -56,7 +56,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     address: '',
     city: '',
     remark: '',
-    status: '',
+    StatusList: [],
     createdAt: '',
     MediaList: [],
   });
@@ -84,7 +84,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     remark: editBusiness.remark,
     type_id: editBusiness.type_id,
     MediaList: editBusiness.MediaList,
-    StatusList: [],
+    StatusList: editBusiness.StatusList,
     type_name: '',
     contact_date: editBusiness.createdAt,
     update_time: new Date().toISOString(),
@@ -94,12 +94,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   });
   const { data: saveData = [], loading: loadingSaveData = false, error: errorSaveData = null, refetch: refetchSaveData } = saveDataResult || {};
   const { data: updateData = [], loading: loadingUpdateData = false, error: errorUpdateData = null, refetch: refetchUpdateData } = updateDataResult || {};
+  const { data: supplierStatusList, loading: loadingSupplierStatusList, error: errorSupplierStatusList, refetch: refetchSupplierStatusList } = useGetSupplierStatusList();
 
 
   useEffect(() => {
     fetchBusinesses();
   }, [bussinessData]);
-
+  
   // Session timer effect
   useEffect(() => {
     const updateSessionTime = () => {
@@ -144,7 +145,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           phone: item.telephone || 'N/A',
           employees: item.head_count.toString() || 'N/A',
           type_id: item.type_id || 0,
-          status: item.StatusList[0]?.name || 'Active',
+          StatusList: item.StatusList || [],
           createdAt: item.contact_date || new Date().toISOString(),
           MediaList: item.MediaList || []
         } as Business)) : [];
@@ -233,7 +234,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           address: '',
           city: '',
           remark: '',
-          status: '',
+          StatusList: [],
           createdAt: '',
           MediaList: [],
         });
@@ -423,19 +424,20 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            business.status === 'Active' 
+                            business.StatusList.some(status => status.name === 'ติดต่อแล้ว') 
                               ? 'bg-green-100 text-green-800'
-                              : business.status === 'Pending'
+                              : business.StatusList.some(status => status.name === 'รอติดต่อ')
                               ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {business.status || 'Active'}
+                            {business.StatusList.map(status => status.name).join(', ')}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button onClick={() => {
                             setShowEditModal(true);
                             setEditBusiness(business);
+                            console.log(business);
                           }} className="px-4 py-2 text-accent rounded-full hover:bg-gray-200 font-semibold transition-all duration-300">
                             <SquarePen className="h-5 w-5" />
                           </button>
@@ -746,7 +748,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </div>
               </div>
 
-              <div className='w-full md:w-1/2'>
+              <div className='w-full'>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   ที่อยู่
                 </label>
@@ -759,77 +761,128 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 />
               </div>
 
-              <div className='w-full md:w-1/2'>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  จังหวัด
-                </label>
-                <input
-                  type="text"
-                  value={editBusiness.city}
-                  onChange={(e) => setEditBusiness({...editBusiness, city: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="ระบุจังหวัด"
-                />
+              <div className='flex gap-6'>
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    จังหวัด
+                  </label>
+                  <input
+                    type="text"
+                    value={editBusiness.city}
+                    onChange={(e) => setEditBusiness({...editBusiness, city: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                    placeholder="ระบุจังหวัด"
+                  />
+                </div>
+
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    ประเภทธุรกิจ *
+                  </label>
+                  <Select
+                    value={supplierTypeList.find(type => type.id === editBusiness.type_id) ? {
+                      value: editBusiness.type_id,
+                      label: supplierTypeList.find(type => type.id === editBusiness.type_id)?.name
+                    } : null}
+                    onChange={(selected) => setEditBusiness({...editBusiness, type_id: selected?.value || 0})}
+                    options={supplierTypeList.map(type => ({
+                      value: type.id,
+                      label: type.name
+                    }))}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (provided) => ({
+                        ...provided,
+                        height: '50px',
+                        borderRadius: '8px',
+                        minHeight: '50px'
+                      })
+                    }}
+                    theme={(theme) => ({
+                      ...theme,
+                      colors: {
+                        ...theme.colors,
+                        primary: '#123F6D',
+                        primary25: '#e6edf5'
+                      }
+                    })}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ประเภทธุรกิจ *
-                </label>
-                <Select
-                  value={supplierTypeList.find(type => type.id === editBusiness.type_id) ? {
-                    value: editBusiness.type_id,
-                    label: supplierTypeList.find(type => type.id === editBusiness.type_id)?.name
-                  } : null}
-                  onChange={(selected) => setEditBusiness({...editBusiness, type_id: selected?.value || 0})}
-                  options={supplierTypeList.map(type => ({
-                    value: type.id,
-                    label: type.name
-                  }))}
-                  className="w-full"
-                  classNamePrefix="react-select"
-                  theme={(theme) => ({
-                    ...theme,
-                    colors: {
-                      ...theme.colors,
-                      primary: '#123F6D',
-                      primary25: '#e6edf5'
+              <div className='flex gap-6'>
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    สถานะ
+                  </label>
+                  <Select
+                    isMulti
+                    value={editBusiness.StatusList.map(status => ({
+                      value: status.id,
+                      label: status.name
+                    }))}
+                    onChange={(selected) => setEditBusiness({...editBusiness, StatusList: selected.map(s => ({
+                      id: s.value,
+                      code: '',
+                      name: s.label
+                    }))})}
+                    options={supplierStatusList.map(status => ({
+                      value: status.id,
+                      label: status.name
+                    }))}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (provided) => ({
+                        ...provided,
+                        height: '50px',
+                        borderRadius: '8px',
+                        minHeight: '50px'
+                      })
+                    }}
+                    theme={(theme) => ({
+                      ...theme,
+                      colors: {
+                        ...theme.colors,
+                        primary: '#123F6D',
+                        primary25: '#e6edf5'
+                      }
+                    })}
+                  />
+                </div>
+                <div className='w-full md:w-1/2'>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    ช่องทางการรับข้อมูล
+                  </label>
+                  <Select
+                    isMulti
+                    value={supplierMediaTypeList
+                      .filter(type => editBusiness.MediaList?.some(m => m.id === type.id))
+                      .map(type => ({ value: type.id, label: type.name }))
                     }
-                  })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ช่องทางการรับข้อมูล
-                </label>
-                <Select
-                  isMulti
-                  value={supplierMediaTypeList
-                    .filter(type => editBusiness.MediaList?.some(m => m.id === type.id))
-                    .map(type => ({ value: type.id, label: type.name }))
-                  }
-                  onChange={(selectedOptions) => {
-                    setEditBusiness({
-                      ...editBusiness,
-                      MediaList: selectedOptions.map(option => ({ id: option.value, name: option.label }))
-                    });
-                  }}
-                  options={supplierMediaTypeList.map(type => ({
-                    value: type.id,
-                    label: type.name
-                  }))}
-                  className="w-full"
-                  classNamePrefix="react-select"
-                  theme={(theme) => ({
-                    ...theme,
-                    colors: {
-                      ...theme.colors,
-                      primary: '#123F6D',
-                      primary25: '#e6edf5'
-                    }
-                  })}
-                />
+                    onChange={(selectedOptions) => {
+                      setEditBusiness({
+                        ...editBusiness,
+                        MediaList: selectedOptions.map(option => ({ id: option.value, name: option.label }))
+                      });
+                    }}
+                    options={supplierMediaTypeList.map(type => ({
+                      value: type.id,
+                      label: type.name
+                    }))}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    theme={(theme) => ({
+                      ...theme,
+                      colors: {
+                        ...theme.colors,
+                        primary: '#123F6D',
+                        primary25: '#e6edf5'
+                      }
+                    })}
+                  />
+                </div>
               </div>
 
               <div>
@@ -877,16 +930,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           onConfirm={() => setShowAlertPopup(false)}
         />
       )}
-
-      {/* API Test Component - Remove this after debugging */}
-      <div className="mt-8">
-        <ApiTest />
-      </div>
-
-      {/* Function Test Component - Remove this after debugging */}
-      <div className="mt-8">
-        <FunctionTest />
-      </div>
 
     </div>
   );

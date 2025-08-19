@@ -42,7 +42,7 @@ export interface Business {
   address: string;
   city: string;
   remark: string;
-  status: string;
+  StatusList: Status[];
   createdAt: string;
   MediaList: Media[];
 }
@@ -54,4 +54,5 @@ export interface B2bLead {
   company: string;
   interestedProject: number;
   media: string;
+  pdpaConsent: boolean;
 }
