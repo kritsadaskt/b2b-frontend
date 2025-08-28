@@ -9,9 +9,7 @@ function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <a href="#search" className="text-gray-600 hover:text-[#123F6D] transition-colors">ค้นหา</a>
-            <a href="#services" className="text-gray-600 hover:text-[#123F6D] transition-colors">บริการ</a>
-            <a href="#partner" className="text-gray-600 hover:text-[#123F6D] transition-colors">สมัครเป็นพาร์ทเนอร์</a>
+            <a href="/#partner" className="text-gray-600 hover:text-[#123F6D] transition-colors">สมัครเป็นพาร์ทเนอร์</a>
           </nav>
         </div>
       </div>

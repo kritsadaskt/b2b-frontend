@@ -3,6 +3,7 @@ import { X, Upload, FileText, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Supplier } from '../utils/types';
 import { getApiHeaders, createApiUrl } from '../utils/api';
+import AlertPopup from './AlertPopup';
 
 interface CsvUploadDialogProps {
   onClose: () => void;
@@ -411,7 +412,13 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     // All uploads completed successfully
     onClose();
     setIsUploading(false);
-    alert(`อัพโหลดสำเร็จ! ข้อมูล ${suppliers.length} รายการถูกส่งไปยัง API แล้ว`);
+    AlertPopup({
+      popup_title: 'อัพโหลดสำเร็จ!',
+      popup_text: `ข้อมูล ${suppliers.length} รายการถูกส่งไปยัง API แล้ว`,
+      popup_type: 'success',
+      onCancel: () => {},
+      onConfirm: () => {}
+    });
   };
 
   const getFileIcon = () => {

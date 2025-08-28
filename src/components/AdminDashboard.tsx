@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload } from 'lucide-react';
+import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
 import { authService } from '../utils/auth';
 import { Supplier, Business } from '../utils/types';
 import { useGetData, useGetSupplierMediaTypeList, useGetSupplierStatusList, useGetSupplierTypeList } from '../hooks/getData';
@@ -66,6 +66,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [alertPopupText, setAlertPopupText] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showCsvUploadDialog, setShowCsvUploadDialog] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { data: bussinessData, loading: loadingData, error: errorData, refetch: refetchBusinesses } = useGetData();
   const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
@@ -258,6 +262,27 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     business.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Pagination calculations
+  const totalItems = filteredBusinesses.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredBusinesses.slice(startIndex, endIndex);
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -390,14 +415,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBusinesses.length === 0 ? (
+                  {currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                         {searchTerm ? 'ไม่พบข้อมูลบริษัทที่ตรงกับค้นหา' : 'ไม่พบข้อมูลบริษัท'}
                       </td>
                     </tr>
                   ) : (
-                    filteredBusinesses.map((business) => (
+                    currentItems.map((business) => (
                       <tr key={business.uid} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -447,6 +472,83 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   )}
                 </tbody>
               </table>
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {!loading && !error && totalItems > 0 && (
+            <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              {/* Items per page and info */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-700">แสดง</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className="text-sm text-gray-700">รายการต่อหน้า</span>
+                </div>
+                <div className="text-sm text-gray-700">
+                  แสดง {startIndex + 1} ถึง {Math.min(endIndex, totalItems)} จาก {totalItems} รายการ
+                  {searchTerm && ` (กรองจากการค้นหา "${searchTerm}")`}
+                </div>
+              </div>
+              
+              {/* Pagination controls */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-gray-300 text-gray-500 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                
+                {/* Page numbers */}
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 7) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 6 + i;
+                    } else {
+                      pageNum = currentPage - 3 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                          currentPage === pageNum
+                            ? 'bg-[#123F6D] text-white'
+                            : 'text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg border border-gray-300 text-gray-500 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
