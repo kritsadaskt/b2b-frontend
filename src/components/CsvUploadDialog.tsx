@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { X, Upload, FileText, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Upload, FileText, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Supplier } from '../utils/types';
 import { getApiHeaders, createApiUrl } from '../utils/api';
@@ -149,9 +149,122 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     event.preventDefault();
   };
 
+  const validateFileStructure = (): { isValid: boolean; errors: string[]; foundColumns: string[] } => {
+    const requiredColumns = [
+      { name: 'email', variations: ['email', 'e-mail', 'mail', 'อีเมล'] },
+      { name: 'supplier_name', variations: ['supplier_name', 'supplier name', 'company', 'company_name', 'บริษัท', 'ชื่อบริษัท'] },
+      { name: 'street', variations: ['street', 'address', 'ที่อยู่', 'ถนน'] },
+      { name: 'city', variations: ['city', 'province', 'จังหวัด', 'เมือง'] },
+      { name: 'sales_person', variations: ['sales_person', 'sales person', 'contact_person', 'contact person', 'ผู้ติดต่อ'] },
+      { name: 'telephone', variations: ['telephone', 'phone', 'tel', 'mobile', 'เบอร์โทร', 'โทรศัพท์'] }
+    ];
+
+    const errors: string[] = [];
+    const foundColumns: string[] = [];
+    const headerLowerCase = headers.map(h => h.toLowerCase().trim().replace(/[_\s-]/g, ''));
+
+    // Check if all required columns exist
+    for (const requiredCol of requiredColumns) {
+      const found = requiredCol.variations.some(variation => {
+        const normalizedVariation = variation.toLowerCase().replace(/[_\s-]/g, '');
+        return headerLowerCase.some(header => 
+          header.includes(normalizedVariation) || 
+          header === normalizedVariation ||
+          normalizedVariation.includes(header)
+        );
+      });
+      
+      if (found) {
+        const foundHeader = headers.find((header) => {
+          const normalizedHeader = header.toLowerCase().trim().replace(/[_\s-]/g, '');
+          return requiredCol.variations.some(variation => {
+            const normalizedVariation = variation.toLowerCase().replace(/[_\s-]/g, '');
+            return normalizedHeader.includes(normalizedVariation) || 
+                   normalizedHeader === normalizedVariation ||
+                   normalizedVariation.includes(normalizedHeader);
+          });
+        });
+        foundColumns.push(`${requiredCol.name} → "${foundHeader}"`);
+      } else {
+        errors.push(`ไม่พบคอลัมน์ที่จำเป็น: "${requiredCol.name}" (ควรมีคำใดคำหนึ่ง: ${requiredCol.variations.join(', ')})`);
+      }
+    }
+
+    // Check if we have at least the minimum expected columns
+    if (headers.length < 6) {
+      errors.push(`ไฟล์ควรมีอย่างน้อย 6 คอลัมน์ แต่พบเพียง ${headers.length} คอลัมน์`);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      foundColumns
+    };
+  };
+
+  const findColumnIndex = (columnName: string): number => {
+    const variations: { [key: string]: string[] } = {
+      'email': ['email', 'e-mail', 'mail', 'อีเมล'],
+      'supplier_name': ['supplier_name', 'supplier name', 'company', 'company_name', 'บริษัท', 'ชื่อบริษัท'],
+      'street': ['street', 'address', 'ที่อยู่', 'ถนน'],
+      'city': ['city', 'province', 'จังหวัด', 'เมือง'],
+      'sales_person': ['sales_person', 'sales person', 'contact_person', 'contact person', 'ผู้ติดต่อ'],
+      'telephone': ['telephone', 'phone', 'tel', 'mobile', 'เบอร์โทร', 'โทรศัพท์']
+    };
+
+    const searchVariations = variations[columnName] || [columnName];
+    const headerLowerCase = headers.map(h => h.toLowerCase().trim().replace(/[_\s-]/g, ''));
+    
+    for (const variation of searchVariations) {
+      const normalizedVariation = variation.toLowerCase().replace(/[_\s-]/g, '');
+      const index = headerLowerCase.findIndex(header => 
+        header.includes(normalizedVariation) || 
+        header === normalizedVariation ||
+        normalizedVariation.includes(header)
+      );
+      if (index !== -1) return index;
+    }
+    
+    return -1;
+  };
+
   const handleUploadData = () => {
+    // Validate file structure first
+    const validation = validateFileStructure();
+    
+    console.log('=== FILE STRUCTURE VALIDATION ===');
+    console.log('Headers found:', headers);
+    console.log('Validation result:', validation);
+    console.log('================================');
+    
+    if (!validation.isValid) {
+      const errorMessage = [
+        'โครงสร้างไฟล์ไม่ถูกต้อง:',
+        '',
+        'ข้อผิดพลาด:',
+        ...validation.errors.map(error => `• ${error}`),
+        '',
+        validation.foundColumns.length > 0 ? 'คอลัมน์ที่พบ:' : '',
+        ...validation.foundColumns.map(col => `✓ ${col}`),
+        '',
+        'หมายเหตุ: ระบบจะจับคู่คอลัมน์อัตโนมัติตามชื่อที่คล้ายกัน',
+        'เช่น "email", "e-mail", "mail" จะถูกจับคู่กับ email'
+      ].filter(line => line !== '').join('\n');
+      
+      alert(errorMessage);
+      return;
+    }
+
+    // Get column indices using the new flexible mapping
+    const emailIndex = findColumnIndex('email');
+    const supplierNameIndex = findColumnIndex('supplier_name');
+    const streetIndex = findColumnIndex('street');
+    const cityIndex = findColumnIndex('city');
+    const salesPersonIndex = findColumnIndex('sales_person');
+    const telephoneIndex = findColumnIndex('telephone');
+
     // Process data and create MediaList for each row
-    const processedData: ProcessedRow[] = originalData.map((row, rowIndex) => {
+    const processedData: ProcessedRow[] = originalData.map((row) => {
       const newRow: ProcessedRow = { ...row };
       const mediaList: { id: number }[] = [];
       
@@ -212,18 +325,18 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
         uid: `supplier_${Date.now()}_${index}`, // Generate unique ID
         type_id: 1, // Default type ID
         type_name: "B2B Partner", // Default type name
-        email: (row[headers[1]] as string) || '', // Email column (index 1)
-        supplier_name: (row[headers[2]] as string) || '', // Supplier Name column (index 2)
+        email: emailIndex >= 0 ? (row[headers[emailIndex]] as string) || '' : '',
+        supplier_name: supplierNameIndex >= 0 ? (row[headers[supplierNameIndex]] as string) || '' : '',
         business_type: "B2B", // Default business type
-        contact_date: (row[headers[9]] as string) || new Date().toISOString().split('T')[0], // Contact date column (index 9)
+        contact_date: new Date().toISOString().split('T')[0], // Default to today
         update_time: new Date().toISOString(),
         is_active: true, // Default to active
-        address: (row[headers[3]] as string) || '', // Street column (index 3)
-        city: (row[headers[4]] as string) || '', // City column (index 4)
-        sales_person: (row[headers[5]] as string) || '', // Contact Person column (index 5)
-        telephone: (row[headers[6]] as string) || '', // Telephone column (index 6)
-        head_count: parseInt((row[headers[7]] as string) || '0') || 0, // Number of employees column (index 7)
-        remark: (row[headers[8]] as string) || '', // Remark column (index 8) - merged with columns after Q
+        address: streetIndex >= 0 ? (row[headers[streetIndex]] as string) || '' : '',
+        city: cityIndex >= 0 ? (row[headers[cityIndex]] as string) || '' : '',
+        sales_person: salesPersonIndex >= 0 ? (row[headers[salesPersonIndex]] as string) || '' : '',
+        telephone: telephoneIndex >= 0 ? (row[headers[telephoneIndex]] as string) || '' : '',
+        head_count: 0, // Default value since we don't have head_count in required columns
+        remark: (row[headers[8]] as string) || '', // Keep existing remark logic for now
         media_remark: '', // Default empty
         StatusList: [], // Default empty status list
         MediaList: ((row.MediaList as { id: number }[]) || []).map(media => ({
@@ -249,6 +362,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     console.log('=== END PREVIEW ===');
     
     // Start uploading data to API
+    //return;
     uploadSuppliers(suppliers);
   };
 
@@ -273,7 +387,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
           throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
 
-        const result = await response.json();
+        await response.json();
         console.log(`Successfully uploaded supplier ${i + 1}/${suppliers.length}:`, supplier.supplier_name);
 
         // Add a small delay between requests to avoid overwhelming the server
@@ -295,6 +409,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     }
 
     // All uploads completed successfully
+    onClose();
     setIsUploading(false);
     alert(`อัพโหลดสำเร็จ! ข้อมูล ${suppliers.length} รายการถูกส่งไปยัง API แล้ว`);
   };

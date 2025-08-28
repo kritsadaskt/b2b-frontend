@@ -55,4 +55,5 @@ export interface B2bLead {
   interestedProject: number;
   media: string;
   pdpaConsent: boolean;
+  propertyTypes: string[];
 }
