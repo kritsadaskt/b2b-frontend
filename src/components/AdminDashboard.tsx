@@ -72,7 +72,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { data: bussinessData, loading: loadingData, error: errorData, refetch: refetchBusinesses } = useGetData();
-  const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
+  //const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
+  const supplierTypeList = [
+    { id: 1, name: 'Bank' },
+    { id: 2, name: 'องค์กร' },
+    { id: 3, name: 'ASW Partner' }
+  ]
   const { data: supplierMediaTypeList, loading: loadingSupplierMediaTypeList, error: errorSupplierMediaTypeList, refetch: refetchSupplierMediaTypeList } = useGetSupplierMediaTypeList();
   const saveDataResult = useSaveData(newBusiness);
   const updateDataResult = useSaveData({
@@ -203,7 +208,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         setShowAlertPopup(true);
         setAlertPopupType('error');
         setAlertPopupTitle('บันทึกข้อมูลไม่สำเร็จ');
-        setAlertPopupText('บันทึกข้อมูลไม่สำเร็จ');
+        setAlertPopupText('บันทึกข้อมูลไม่สำเร็จ: ' + response.Message);
       }
       
     } catch (error) {
@@ -248,11 +253,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         setShowAlertPopup(true);
         setAlertPopupType('error');
         setAlertPopupTitle('อัปเดตข้อมูลไม่สำเร็จ');
-        setAlertPopupText('อัปเดตข้อมูลไม่สำเร็จ');
+        setAlertPopupText(response.Message);
       }
-      
     } catch (error) {
-      console.error('Error updating business:', error);
+      setShowEditModal(false);
+      setShowAlertPopup(true);
+      setAlertPopupType('error');
+      setAlertPopupTitle('อัปเดตข้อมูลไม่สำเร็จ');
+      setAlertPopupText(error instanceof Error ? error.message : 'An error occurred while updating business');
     }
   };
 
@@ -572,7 +580,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <form onSubmit={handleAddBusiness} className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ชื่อบริษัท *
+                  ชื่อบริษัท <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -588,7 +596,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    ชื่อผู้ติดต่อ *
+                    ชื่อผู้ติดต่อ <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -602,7 +610,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    อีเมล *
+                    อีเมล <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -657,7 +665,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <div className='flex gap-6'>
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    จำนวนพนักงาน (Head Office)
+                    จำนวนพนักงาน (Head Office) <span className="text-red-500">*</span>  
                   </label>
                   <input
                     type="number"
@@ -670,20 +678,26 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </div>             
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    ประเภท
+                    ประเภท <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    value={newBusiness?.type_id}
-                    onChange={(e) => setNewBusiness({...newBusiness, type_id: parseInt(e.target.value)})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  >
-                    <option value={0}>เลือกประเภทธุรกิจ</option>
-                    {supplierTypeList.map((type: any) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    value={supplierTypeList.find(type => type.id === newBusiness?.type_id)}
+                    onChange={(selected) => setNewBusiness({...newBusiness, type_id: selected?.id || 0})}
+                    options={supplierTypeList.map(type => ({
+                      id: type.id,
+                      name: type.name
+                    }))}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (provided) => ({
+                        ...provided,
+                        height: '50px',
+                        borderRadius: '8px',
+                        minHeight: '50px'
+                      })
+                    }}
+                  />
                 </div>
               </div>
 
@@ -778,7 +792,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             }} className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ชื่อบริษัท *
+                  ชื่อบริษัท <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -793,7 +807,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <div className='flex gap-6'>
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    ชื่อผู้ติดต่อ *
+                    ชื่อผู้ติดต่อ <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -807,7 +821,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    อีเมล *
+                    อีเมล <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -823,7 +837,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <div className='flex gap-6'>
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    เบอร์โทรศัพท์ *
+                    เบอร์โทรศัพท์ <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -837,7 +851,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    จำนวนพนักงาน *
+                    จำนวนพนักงาน <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -879,7 +893,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    ประเภทธุรกิจ *
+                    ประเภท <span className="text-red-500">*</span>
                   </label>
                   <Select
                     value={supplierTypeList.find(type => type.id === editBusiness.type_id) ? {
