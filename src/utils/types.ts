@@ -48,12 +48,26 @@ export interface Business {
 }
 
 export interface B2bLead {
-  fname: string;
-  tel: string;
-  email: string;
-  company: string;
-  interestedProject: number;
-  media: string;
-  pdpaConsent: boolean;
-  propertyTypes: string[];
+  Fname: string;
+  Lname: string;
+  Tel: string;
+  Email: string;
+  Company: string;
+  CompanyID: string;
+  InterestedProject: number;
+  Source: string[];
+  PDPA: boolean;
+  TypeInterest: string[];
+}
+
+export interface B2bLeadResponse {
+    uid?: string;
+    Fname: string;  
+    Lname: string;
+    Tel: string;
+    Email: string;
+    CompanyID: string;
+    InterestedProject: number;
+    Source: string[];
+    TypeInterest: string[];
 }

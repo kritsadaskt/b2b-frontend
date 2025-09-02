@@ -74,7 +74,7 @@ function HomePage() {
       case 'Enter':
         e.preventDefault();
         if (selectedIndex >= 0) {
-          selectCompany(filteredCompanies[selectedIndex].supplier_name);
+          selectCompany(filteredCompanies[selectedIndex].supplier_name, filteredCompanies[selectedIndex].uid);
         } else {
           handleSearch(e as any);
         }
@@ -86,7 +86,7 @@ function HomePage() {
     }
   };
 
-  const selectCompany = (companyName: string) => {
+  const selectCompany = (companyName: string, companyUid: string) => {
     setSearchQuery(companyName);
     setShowDropdown(false);
     setSelectedIndex(-1);
@@ -95,6 +95,10 @@ function HomePage() {
       company.supplier_name.toLowerCase() === companyName.toLowerCase()
     );
     setSearchResult(isAvailable ? 'available' : 'not-available');
+    if (sessionStorage.getItem('selectedCompany')) {
+      sessionStorage.removeItem('selectedCompany');
+    }
+    sessionStorage.setItem('selectedCompany', JSON.stringify({ companyName: companyName, companyUid: companyUid }));
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -214,12 +218,14 @@ function HomePage() {
                          }`}
                          onMouseDown={(e) => {
                            e.preventDefault(); // Prevent blur from firing
-                           selectCompany(company.supplier_name);
-                           console.log(company.supplier_name);
+                           selectCompany(company.supplier_name, company.uid);
+                          //  console.log(company.supplier_name);
+                          //  console.log(company.uid);
                          }}
                          onClick={() => {
-                           selectCompany(company.supplier_name);
-                           console.log(company.supplier_name);
+                           selectCompany(company.supplier_name, company.uid);
+                          //  console.log(company.supplier_name);
+                          //  console.log(company.uid);
                          }}
                        >
                          {company.supplier_name}
@@ -245,7 +251,9 @@ function HomePage() {
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h4 className="text-xl font-semibold text-green-800 mb-2">พบข้อมูล</h4>
                   <h5 className="text-green-700 text-xl mb-4">บริษัท <strong>{searchQuery}</strong></h5>
-                  <p className="text-green-700">กรุณาติดต่อเจ้าหน้าที่โชว์รูมโครงการเพื่อรับสิทธิ์</p>
+                  <div className="flex justify-center">
+                    <a href={`/submit`} className="bg-green-700 hover:bg-green-800 text-white px-8 py-4 rounded-lg font-semibold shadow-lg">กรอกข้อมูลเพื่อรับสิทธิ์</a>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">

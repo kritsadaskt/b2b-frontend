@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Supplier } from "../utils/types";
+import { B2bLead, Supplier } from "../utils/types";
 import { createApiUrl, getApiHeaders } from "../utils/api";
 
 export const useSaveData = (Supplier: Supplier) => {
@@ -41,5 +41,44 @@ export const useSaveData = (Supplier: Supplier) => {
     loading,
     error,
     refetch: fetchData
+  };
+}
+
+export const useSaveLeadData = (LeadData: B2bLead) => {
+  const [data, setData] = useState<B2bLead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const body = JSON.stringify(LeadData);
+
+  const saveLeadData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(createApiUrl('/Suplier/SaveSuplierLead'), {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: body
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save lead data: ${response.status} ${response.statusText}`);
+      }
+      const result = await response.json();
+      setData(result);
+      setError(null);
+      return result;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while saving lead data');
+      console.error('Error saving lead data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return {
+    data,
+    loading,
+    error,
+    refetch: saveLeadData
   };
 }
