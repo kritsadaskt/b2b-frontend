@@ -681,11 +681,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     ประเภท <span className="text-red-500">*</span>
                   </label>
                   <Select
-                    value={supplierTypeList.find(type => type.id === newBusiness?.type_id)}
-                    onChange={(selected) => setNewBusiness({...newBusiness, type_id: selected?.id || 0})}
+                    value={supplierTypeList.find(type => type.id === newBusiness?.type_id) ? {
+                      value: newBusiness?.type_id,
+                      label: supplierTypeList.find(type => type.id === newBusiness?.type_id)?.name
+                    } : null}
+                    onChange={(selected) => setNewBusiness({...newBusiness, type_id: selected?.value || 0})}
                     options={supplierTypeList.map(type => ({
-                      id: type.id,
-                      name: type.name
+                      value: type.id,
+                      label: type.name
                     }))}
                     className="w-full"
                     classNamePrefix="react-select"
