@@ -28,6 +28,13 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const [errorRow, setErrorRow] = useState<{ rowIndex: number; supplier: Supplier; error: string } | null>(null);
+  const supplierTypeList = [
+    { id: 1, name: 'Bank' },
+    { id: 2, name: 'องค์กร' },
+    { id: 3, name: 'ASW Partner' },
+    { id: 4, name: 'sponsor' },
+    { id: 5, name: 'other' }
+  ]
 
   const processCsvFile = (file: File) => {
     setIsProcessing(true);
@@ -157,7 +164,9 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
       { name: 'street', variations: ['street', 'address', 'ที่อยู่', 'ถนน'] },
       { name: 'city', variations: ['city', 'province', 'จังหวัด', 'เมือง'] },
       { name: 'sales_person', variations: ['sales_person', 'sales person', 'contact_person', 'contact person', 'ผู้ติดต่อ'] },
-      { name: 'telephone', variations: ['telephone', 'phone', 'tel', 'mobile', 'เบอร์โทร', 'โทรศัพท์'] }
+      { name: 'telephone', variations: ['telephone', 'phone', 'tel', 'mobile', 'เบอร์โทร', 'โทรศัพท์'] },
+      { name: 'head_count', variations: ['head_count', 'จำนวนคน', 'คน', 'จำนวนพนักงาน Head Office'] },
+      { name: 'type', variations: ['type', 'ประเภท', 'ประเภทบริษัท'] }
     ];
 
     const errors: string[] = [];
@@ -210,7 +219,9 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
       'street': ['street', 'address', 'ที่อยู่', 'ถนน'],
       'city': ['city', 'province', 'จังหวัด', 'เมือง'],
       'sales_person': ['sales_person', 'sales person', 'contact_person', 'contact person', 'ผู้ติดต่อ'],
-      'telephone': ['telephone', 'phone', 'tel', 'mobile', 'เบอร์โทร', 'โทรศัพท์']
+      'telephone': ['telephone', 'phone', 'tel', 'mobile', 'เบอร์โทร', 'โทรศัพท์'],
+      'head_count': ['head_count', 'จำนวนคน', 'คน', 'จำนวนพนักงาน Head Office'],
+      'type': ['type', 'ประเภท', 'ประเภทบริษัท']
     };
 
     const searchVariations = variations[columnName] || [columnName];
@@ -233,9 +244,13 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     // Validate file structure first
     const validation = validateFileStructure();
     
+    // Get type column index early for additional validation
+    const typeIndex = findColumnIndex('type');
+    
     console.log('=== FILE STRUCTURE VALIDATION ===');
     console.log('Headers found:', headers);
     console.log('Validation result:', validation);
+    console.log('Type column index:', typeIndex);
     console.log('================================');
     
     if (!validation.isValid) {
@@ -249,10 +264,18 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
         ...validation.foundColumns.map(col => `✓ ${col}`),
         '',
         'หมายเหตุ: ระบบจะจับคู่คอลัมน์อัตโนมัติตามชื่อที่คล้ายกัน',
-        'เช่น "email", "e-mail", "mail" จะถูกจับคู่กับ email'
+        'เช่น "email", "e-mail", "mail" จะถูกจับคู่กับ email',
+        '',
+        'สำหรับคอลัมน์ "type": ค่าจะถูกคัดลอกโดยตรงไปยัง type_name ในข้อมูลที่ส่งไป API'
       ].filter(line => line !== '').join('\n');
       
       alert(errorMessage);
+      return;
+    }
+
+    // Additional validation specifically for type column
+    if (typeIndex < 0) {
+      alert('ไม่พบคอลัมน์ "type" ในไฟล์ กรุณาตรวจสอบว่าไฟล์มีคอลัมน์ type หรือ "ประเภท"\n\nค่าในคอลัมน์นี้จะถูกคัดลอกโดยตรงไปยัง type_name ในข้อมูลที่ส่งไป API');
       return;
     }
 
@@ -263,6 +286,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     const cityIndex = findColumnIndex('city');
     const salesPersonIndex = findColumnIndex('sales_person');
     const telephoneIndex = findColumnIndex('telephone');
+    const headCountIndex = findColumnIndex('head_count');
 
     // Process data and create MediaList for each row
     const processedData: ProcessedRow[] = originalData.map((row) => {
@@ -282,13 +306,13 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
         }
       }
       
-      // Merge data from columns after Q (index 17+) into column I (index 8)
+      // Merge data from columns after Q (index 18+) into column I (index 8)
       const columnIHeader = headers[8]; // Column I
       if (columnIHeader) {
         let mergedData = row[columnIHeader] || '';
         
         // Collect data from columns after Q
-        for (let j = 17; j < headers.length; j++) {
+        for (let j = 18; j < headers.length; j++) {
           const columnHeader = headers[j];
           if (columnHeader) {
             const cellValue = row[columnHeader];
@@ -310,7 +334,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
       newRow.MediaList = mediaList;
       
       // Remove the original K-Q columns and columns after Q from the processed data
-      for (let j = 10; j < headers.length; j++) {
+      for (let j = 10; j <= 16 && j < headers.length; j++) {
         const columnHeader = headers[j];
         if (columnHeader) {
           delete newRow[columnHeader];
@@ -322,10 +346,16 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
 
     // Transform processed data to Supplier format for API
     const suppliers: Supplier[] = processedData.map((row, index) => {
+      // Simply copy the value from "ประเภท" column to type_name
+      //console.log('Row:', row);
+      const typeValue = typeIndex >= 0 ? (row[headers[typeIndex]] as string) || '' : '';
+      const type_name = typeValue.trim(); // Just clean up whitespace
+      const type_id = supplierTypeList.find(type => type.name === type_name)?.id || 0;
+      
       const supplier: Supplier = {
         uid: `supplier_${Date.now()}_${index}`, // Generate unique ID
-        type_id: 1, // Default type ID
-        type_name: "B2B Partner", // Default type name
+        type_id: type_id,
+        type_name: type_name,
         email: emailIndex >= 0 ? (row[headers[emailIndex]] as string) || '' : '',
         supplier_name: supplierNameIndex >= 0 ? (row[headers[supplierNameIndex]] as string) || '' : '',
         business_type: "B2B", // Default business type
@@ -336,7 +366,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
         city: cityIndex >= 0 ? (row[headers[cityIndex]] as string) || '' : '',
         sales_person: salesPersonIndex >= 0 ? (row[headers[salesPersonIndex]] as string) || '' : '',
         telephone: telephoneIndex >= 0 ? (row[headers[telephoneIndex]] as string) || '' : '',
-        head_count: 0, // Default value since we don't have head_count in required columns
+        head_count: headCountIndex >= 0 ? parseInt((row[headers[headCountIndex]] as string) || '0') || 0 : 0, // Default value since we don't have head_count in required columns
         remark: (row[headers[8]] as string) || '', // Keep existing remark logic for now
         media_remark: '', // Default empty
         StatusList: [], // Default empty status list
@@ -352,15 +382,22 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     // Store prepared suppliers for potential API calls
     setPreparedSuppliers(suppliers);
 
-    console.log('=== UPLOADED DATA PREVIEW ===');
-    console.log('File Type:', fileType);
-    console.log('File Name:', fileName);
-    console.log('Total Rows:', processedData.length);
-    console.log('Headers:', headers);
-    console.log('Preview Data (JSON) - with MediaList:', JSON.stringify(processedData, null, 2));
-    console.log('=== SUPPLIERS PREPARED FOR API ===');
-    console.log('Prepared Suppliers:', JSON.stringify(suppliers, null, 2));
-    console.log('=== END PREVIEW ===');
+    // console.log('=== UPLOADED DATA PREVIEW ===');
+    // console.log('File Type:', fileType);
+    // console.log('File Name:', fileName);
+    // console.log('Total Rows:', processedData.length);
+    // console.log('Headers:', headers);
+    // console.log('Type Column Index:', typeIndex);
+    // console.log('=== SUPPLIERS PREPARED FOR API ===');
+    // console.log('Prepared Suppliers:', JSON.stringify(suppliers, null, 2));
+    
+    // // Log type copying results
+    // console.log('=== TYPE COPYING RESULTS ===');
+    // suppliers.forEach((supplier, index) => {
+    //   const originalTypeValue = typeIndex >= 0 ? originalData[index][headers[typeIndex]] : 'N/A';
+    //   console.log(`Row ${index + 1}: "${originalTypeValue}" → type_name: "${supplier.type_name}"`);
+    // });
+    // console.log('=== END PREVIEW ===');
     
     // Start uploading data to API
     //return;
@@ -368,6 +405,8 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
   };
 
   const uploadSuppliers = async (suppliers: Supplier[]) => {
+    //console.log('Uploading suppliers:', suppliers);
+    //return;
     setIsUploading(true);
     setErrorRow(null);
     setUploadProgress({ current: 0, total: suppliers.length });
@@ -394,8 +433,9 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
         // Add a small delay between requests to avoid overwhelming the server
         await new Promise(resolve => setTimeout(resolve, 100));
 
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      } catch (err) {
+        const error = err as Error;
+        const errorMessage = error.message || 'Unknown error occurred';
         console.error(`Error uploading supplier ${i + 1}/${suppliers.length}:`, errorMessage);
         
         // Stop uploading and show error

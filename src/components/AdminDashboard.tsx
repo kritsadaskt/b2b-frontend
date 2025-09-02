@@ -76,7 +76,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const supplierTypeList = [
     { id: 1, name: 'Bank' },
     { id: 2, name: 'องค์กร' },
-    { id: 3, name: 'ASW Partner' }
+    { id: 3, name: 'ASW Partner' },
+    { id: 4, name: 'sponsor' },
+    { id: 5, name: 'other' }
   ]
   const { data: supplierMediaTypeList, loading: loadingSupplierMediaTypeList, error: errorSupplierMediaTypeList, refetch: refetchSupplierMediaTypeList } = useGetSupplierMediaTypeList();
   const saveDataResult = useSaveData(newBusiness);
