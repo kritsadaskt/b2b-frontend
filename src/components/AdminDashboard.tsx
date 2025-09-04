@@ -20,7 +20,6 @@ interface AdminDashboardProps {
 
 export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -135,7 +134,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const fetchBusinesses = async () => {
     try {
-      setLoading(true);
       // console.log(bussinessData);
 
       // Transform API data to match our interface
@@ -166,8 +164,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     } catch (err) {
       setError('Failed to load businesses. Please try again.');
       console.error('Error fetching businesses:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -378,19 +374,22 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
         {/* Business Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          {loading ? (
+          {loadingData ? (
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#123F6D] mx-auto"></div>
-              <p className="text-gray-600 mt-4">Loading businesses...</p>
+              <p className="text-gray-600 mt-4">กำลังโหลดข้อมูล...</p>
             </div>
-          ) : error ? (
+          ) : error || errorData ? (
             <div className="p-8 text-center">
-              <p className="text-red-600 mb-4">{error}</p>
+              <p className="text-red-600 mb-4">{error || errorData}</p>
               <button
-                onClick={fetchBusinesses}
+                onClick={() => {
+                  fetchBusinesses();
+                  refetchBusinesses();
+                }}
                 className="bg-[#123F6D] hover:bg-[#0f2f54] text-white px-4 py-2 rounded-lg transition-colors"
               >
-                Retry
+                ลองใหม่
               </button>
             </div>
           ) : (
@@ -486,7 +485,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           )}
           
           {/* Pagination */}
-          {!loading && !error && totalItems > 0 && (
+          {!loadingData && !error && !errorData && totalItems > 0 && (
             <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
               {/* Items per page and info */}
               <div className="flex items-center space-x-4">
