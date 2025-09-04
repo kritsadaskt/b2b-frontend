@@ -938,16 +938,15 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     สถานะ
                   </label>
                   <Select
-                    isMulti
-                    value={editBusiness.StatusList.map(status => ({
-                      value: status.id,
-                      label: status.name
-                    }))}
-                    onChange={(selected) => setEditBusiness({...editBusiness, StatusList: selected.map(s => ({
-                      id: s.value,
+                    value={editBusiness.StatusList.length > 0 ? {
+                      value: editBusiness.StatusList[0].id,
+                      label: editBusiness.StatusList[0].name
+                    } : null}
+                    onChange={(selected) => setEditBusiness({...editBusiness, StatusList: selected ? [{
+                      id: selected.value,
                       code: '',
-                      name: s.label
-                    }))})}
+                      name: selected.label
+                    }] : []})}
                     options={supplierStatusList.map(status => ({
                       value: status.id,
                       label: status.name
