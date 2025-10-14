@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { authService } from '../utils/auth';
 import { Supplier, Business } from '../utils/types';
-import { useGetData, useGetSupplierMediaTypeList, useGetSupplierStatusList, useGetSupplierTypeList } from '../hooks/getData';
+import { useGetData, useGetSupplierMediaTypeList, useGetSupplierStatusList, useGetSupplierTypeList, useGetApiLeads } from '../hooks/getData';
 import Select from 'react-select';
 import { useSaveData } from '../hooks/saveData';
 import AlertPopup from './AlertPopup';
@@ -24,6 +24,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeView, setActiveView] = useState<'businesses' | 'leads'>('businesses');
   const [newBusiness, setNewBusiness] = useState<Supplier>({
     uid: '',
     supplier_name: '',
@@ -71,6 +72,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { data: bussinessData, loading: loadingData, error: errorData, refetch: refetchBusinesses } = useGetData();
+  const { data: leadsData, loading: loadingLeads, error: errorLeads, refetch: refetchLeads } = useGetApiLeads();
   //const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
   const supplierTypeList = [
     { id: 1, name: 'Bank' },
@@ -314,20 +316,57 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Tabs */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveView('businesses')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'businesses'
+                    ? 'border-[#123F6D] text-[#123F6D]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Building2 className="h-5 w-5" />
+                  <span>จัดการข้อมูลบริษัท</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveView('leads')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'leads'
+                    ? 'border-[#123F6D] text-[#123F6D]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Users className="h-5 w-5" />
+                  <span>ข้อมูลผู้สนใจ (Leads)</span>
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+
         {/* Page Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-[#123F6D]">ระบบจัดการข้อมูลบริษัท</h2>
+            <h2 className="text-3xl font-bold text-[#123F6D]">
+              {activeView === 'businesses' ? 'ระบบจัดการข้อมูลบริษัท' : 'ข้อมูลผู้สนใจ (Leads)'}
+            </h2>
           </div>
-          <div className="relative">
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="bg-[#F1683B] hover:bg-[#e5572f] text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all duration-300 transform hover:scale-105"
-            >
-              <Plus className="h-5 w-5" />
-              <span>เพิ่ม</span>
-              <ChevronDown className="h-4 w-4" />
-            </button>
+          {activeView === 'businesses' && (
+            <div className="relative">
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="bg-[#F1683B] hover:bg-[#e5572f] text-white px-6 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all duration-300 transform hover:scale-105"
+              >
+                <Plus className="h-5 w-5" />
+                <span>เพิ่ม</span>
+                <ChevronDown className="h-4 w-4" />
+              </button>
             
             {showDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
@@ -355,7 +394,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -372,8 +412,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           </div>
         </div>
 
-        {/* Business Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Content based on active view */}
+        {activeView === 'businesses' ? (
+          /* Business Table */
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {loadingData ? (
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#123F6D] mx-auto"></div>
@@ -561,6 +603,93 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </div>
           )}
         </div>
+        ) : (
+          /* Leads Table */
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            {loadingLeads ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#123F6D] mx-auto"></div>
+                <p className="text-gray-600 mt-4">กำลังโหลดข้อมูล Leads...</p>
+              </div>
+            ) : errorLeads ? (
+              <div className="p-8 text-center">
+                <p className="text-red-600 mb-4">{errorLeads}</p>
+                <button
+                  onClick={refetchLeads}
+                  className="bg-[#123F6D] hover:bg-[#0f2f54] text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  ลองใหม่
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ชื่อ-นามสกุล
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        อีเมล
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        เบอร์โทร
+                      </th>
+                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        บริษัท
+                      </th> */}
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        โครงการที่สนใจ
+                      </th>
+                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        แหล่งที่มา
+                      </th> */}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {leadsData.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                          ไม่มีข้อมูล Leads
+                        </td>
+                      </tr>
+                    ) : (
+                      leadsData.map((lead) => (
+                        <tr key={lead.uid} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <Users className="h-5 w-5 text-[#123F6D] mr-3" />
+                              <div className="text-sm font-medium text-gray-900">
+                                {lead.Fname} {lead.Lname}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{lead.Email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{lead.Tel}</div>
+                          </td>
+                          {/* <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{getCompanyName(lead.CompanyID)}</div>
+                          </td> */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{lead.InterestedProjectName}</div>
+                          </td>
+                          {/* <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {Array.isArray(lead.Source) ? lead.Source.join(', ') : lead.Source}
+                            </div>
+                          </td> */}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add Business Sidebar */}

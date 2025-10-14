@@ -66,8 +66,11 @@ export interface B2bLeadResponse {
     Lname: string;
     Tel: string;
     Email: string;
+    Company: string;
     CompanyID: string;
     InterestedProject: number;
+    InterestedProjectName: string;
     Source: string[];
+    PDPA: boolean;
     TypeInterest: string[];
 }
