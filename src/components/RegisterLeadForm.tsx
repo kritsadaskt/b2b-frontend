@@ -264,7 +264,7 @@ function RegisterLeadForm() {
             </a>
             {" "}และ
             <a 
-              href="https://assetwise.co.th/terms-conditions/b2b" 
+              href="https://assetwise.co.th/terms-and-conditions/assetwise-partners/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-[#123F6D] hover:text-[#0f2f54] underline ml-1"
