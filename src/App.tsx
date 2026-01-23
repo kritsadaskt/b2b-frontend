@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { Search, Building2, CheckCircle, ArrowRight } from 'lucide-react';
 
 // Lazy load admin components for code splitting
@@ -15,6 +15,7 @@ import HeroBanner from './components/HeroBanner';
 import Info from './components/Info';
 import Header from './components/Header';
 import AlertPopup from './components/AlertPopup';
+import HowToApply from './components/HowToApply';
 
 function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +44,7 @@ function HomePage() {
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Filter companies based on search query
   const filteredCompanies = availableCompanies.filter((company: Supplier) =>
@@ -118,6 +120,16 @@ function HomePage() {
 
   const handleBusinessSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if terms are accepted
+    if (!termsAccepted) {
+      setAlertType('error');
+      setAlertTitle('กรุณายอมรับข้อกำหนด');
+      setAlertMessage('กรุณายอมรับข้อกำหนดและเงื่อนไขก่อนส่งข้อมูล');
+      setShowAlert(true);
+      return;
+    }
+    
     setIsSending(true);
     setBusinessForm({
       companyName: '',
@@ -126,7 +138,7 @@ function HomePage() {
       phone: '',
       employees: '',
       industry: '',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     // Send form data to API endpoint
     fetch('https://node.assetwise.dev/webhook/send-b2b-mail', {
@@ -252,7 +264,7 @@ function HomePage() {
                   <h4 className="text-xl font-semibold text-green-800 mb-2">พบข้อมูล</h4>
                   <h5 className="text-green-700 text-xl mb-4">บริษัท <strong>{searchQuery}</strong></h5>
                   <div className="flex justify-center">
-                    <a href={`/submit`} className="bg-green-700 hover:bg-green-800 text-white px-8 py-4 rounded-lg font-semibold shadow-lg">กรอกข้อมูลเพื่อรับสิทธิ์</a>
+                    <Link to="/submit" className="bg-green-700 hover:bg-green-800 text-white px-8 py-4 rounded-lg font-semibold shadow-lg">กรอกข้อมูลเพื่อรับสิทธิ์</Link>
                   </div>
                 </div>
               ) : (
@@ -376,6 +388,25 @@ function HomePage() {
                 </div>
               </div>
 
+              <div className="flex items-start my-4">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) =>
+                    setTermsAccepted(e.target.checked)
+                  }
+                  className="mt-1 accent-[#F1683B]"
+                  style={{ width: 18, height: 18 }}
+                />
+                <label
+                  htmlFor="terms"
+                  className="ml-2 text-sm text-gray-700 select-none cursor-pointer"
+                >
+                  ข้าพเจ้ายินยอมให้ AssetWise เก็บรวบรวม ใช้ และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้าตามวัตถุประสงค์ที่ระบุไว้ใน<a href="https://assetwise.co.th/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline text-[#123F6D] hover:text-[#F1683B] transition">นโยบายความเป็นส่วนตัว</a> และ<a href="https://assetwise.co.th/terms-and-conditions/assetwise-partners/" target="_blank" rel="noopener noreferrer" className="underline text-[#123F6D] hover:text-[#F1683B] transition">ข้อกำหนดและเงื่อนไข</a> <span className="text-red-500">*</span>
+                </label>
+              </div>
+
               <button
                 type="submit"
                 className="w-full bg-[#F1683B] hover:bg-[#e5572f] text-white py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -387,6 +418,9 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* How to Apply Section */}
+      <HowToApply />
 
       {/* Footer */}
       <Footer />

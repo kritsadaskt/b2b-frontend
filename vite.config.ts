@@ -38,6 +38,8 @@ export default defineConfig(({ mode }) => ({
     // Increase chunk size warning limit to 600kb
     chunkSizeWarningLimit: 600,
   },
+  // Vite proxy for development only (avoids CORS issues in local dev)
+  // Production builds use direct API calls via VITE_APP_API_BASE_ENDPOINT
   server: {
     proxy: {
       '/api': {

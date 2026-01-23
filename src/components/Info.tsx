@@ -4,7 +4,7 @@ function Info() {
       <div className="container">
         <div className="flex flex-col md:flex-row gap-7 items-center">
           <div className="w-full md:w-1/2">
-            <img src="images/b2b-info-headline.webp" alt="Info" className="w-11/12 md:w-full mx-auto" />
+            <img src="/images/b2b-info-headline.webp" alt="Info" className="w-11/12 md:w-full mx-auto" />
           </div>
           <div className="w-full md:w-1/2 h-full">
             <div className="info-detail-box bg-white p-8 shadow-lg w-full md:w-4/5 mx-auto">
