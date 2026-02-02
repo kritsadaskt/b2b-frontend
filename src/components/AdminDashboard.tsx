@@ -324,25 +324,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   // Handle export for businesses
   const handleExportBusinesses = () => {
-    const dataToExport = filteredBusinesses.map(business => ({
-      ...business,
-      typeName: supplierTypeList.find(type => type.id === business.type_id)?.name || business.type_id.toString(),
-    }));
-
     const headers = [
-      { key: 'companyName', label: 'ชื่อบริษัท' },
-      { key: 'contactName', label: 'ชื่อผู้ติดต่อ' },
-      { key: 'email', label: 'อีเมล' },
-      { key: 'phone', label: 'เบอร์โทรศัพท์' },
-      { key: 'employees', label: 'จำนวนพนักงาน' },
-      { key: 'typeName', label: 'ประเภท' },
-      { key: 'StatusList', label: 'สถานะ' },
-      { key: 'address', label: 'ที่อยู่' },
-      { key: 'city', label: 'จังหวัด' },
-      { key: 'remark', label: 'หมายเหตุ' },
+      { key: 'email', label: 'email' },
+      { key: 'companyName', label: 'supplier_name' },
+      { key: 'address', label: 'address' },
+      { key: 'contactName', label: 'contact_person' },
+      { key: 'phone', label: 'telephone' },
+      { key: 'employees', label: 'head_count' },
+      { key: 'remark', label: 'remark' },
     ];
 
-    exportToCSV(dataToExport, 'businesses', headers);
+    exportToCSV(filteredBusinesses, 'businesses', headers);
   };
 
   // Handle export for leads
@@ -526,13 +518,16 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      อีเมล
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       ชื่อบริษัท
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ชื่อผู้ติดต่อ
+                      ที่อยู่
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      อีเมล
+                      ชื่อผู้ติดต่อ
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       เบอร์โทรศัพท์
@@ -541,10 +536,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       จำนวนพนักงาน
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ประเภท
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      สถานะ
+                      หมายเหตุ
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       จัดการ
@@ -562,6 +554,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     currentItems.map((business) => (
                       <tr key={business.uid} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{business.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <Building2 className="h-5 w-5 text-[#123F6D] mr-3" />
                             <div className="text-sm font-medium text-gray-900">
@@ -570,10 +565,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{business.contactName}</div>
+                          <div className="text-sm text-gray-900">{business.address}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{business.email}</div>
+                          <div className="text-sm text-gray-900">{business.contactName}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{business.phone}</div>
@@ -582,18 +577,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <div className="text-sm text-gray-900">{business.employees}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{supplierTypeList.find(type => type.id === business.type_id)?.name || business.type_id}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            business.StatusList.some(status => status.name === 'ติดต่อแล้ว') 
-                              ? 'bg-green-100 text-green-800'
-                              : business.StatusList.some(status => status.name === 'รอติดต่อ')
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {business.StatusList.map(status => status.name).join(', ')}
-                          </span>
+                          <div className="text-sm text-gray-900">{business.remark}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button onClick={() => {
