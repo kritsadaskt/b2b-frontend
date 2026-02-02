@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload, ChevronLeft, ChevronRight, Users, Download } from 'lucide-react';
 import { authService } from '../utils/auth';
 import { Supplier, Business } from '../utils/types';
 import { useGetData, useGetSupplierMediaTypeList, useGetSupplierStatusList, useGetSupplierTypeList, useGetApiLeads } from '../hooks/getData';
@@ -291,6 +291,85 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setCurrentPage(1);
   };
 
+  // Export to CSV function
+  const exportToCSV = (data: any[], filename: string, headers: { key: string; label: string }[]) => {
+    // Build CSV header row
+    const headerRow = headers.map(h => h.label).join(',');
+    
+    // Build data rows
+    const dataRows = data.map(item => 
+      headers.map(h => {
+        let value = item[h.key];
+        // Handle arrays (like StatusList, MediaList)
+        if (Array.isArray(value)) {
+          value = value.map((v: any) => v.name || v).join('; ');
+        }
+        // Escape quotes and wrap in quotes if contains comma or quotes
+        if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+          value = `"${value.replace(/"/g, '""')}"`;
+        }
+        return value ?? '';
+      }).join(',')
+    ).join('\n');
+    
+    // Create and download file with BOM for Thai characters
+    const csv = `\uFEFF${headerRow}\n${dataRows}`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  // Handle export for businesses
+  const handleExportBusinesses = () => {
+    const dataToExport = filteredBusinesses.map(business => ({
+      ...business,
+      typeName: supplierTypeList.find(type => type.id === business.type_id)?.name || business.type_id.toString(),
+    }));
+
+    const headers = [
+      { key: 'companyName', label: 'ชื่อบริษัท' },
+      { key: 'contactName', label: 'ชื่อผู้ติดต่อ' },
+      { key: 'email', label: 'อีเมล' },
+      { key: 'phone', label: 'เบอร์โทรศัพท์' },
+      { key: 'employees', label: 'จำนวนพนักงาน' },
+      { key: 'typeName', label: 'ประเภท' },
+      { key: 'StatusList', label: 'สถานะ' },
+      { key: 'address', label: 'ที่อยู่' },
+      { key: 'city', label: 'จังหวัด' },
+      { key: 'remark', label: 'หมายเหตุ' },
+    ];
+
+    exportToCSV(dataToExport, 'businesses', headers);
+  };
+
+  // Handle export for leads
+  const handleExportLeads = () => {
+    const filteredLeads = leadsData.filter(lead => 
+      `${lead.Fname} ${lead.Lname}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.Email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.Tel?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const dataToExport = filteredLeads.map(lead => ({
+      fullName: `${lead.Fname} ${lead.Lname}`,
+      email: lead.Email,
+      tel: lead.Tel,
+      interestedProject: lead.InterestedProjectName,
+    }));
+
+    const headers = [
+      { key: 'fullName', label: 'ชื่อ-นามสกุล' },
+      { key: 'email', label: 'อีเมล' },
+      { key: 'tel', label: 'เบอร์โทร' },
+      { key: 'interestedProject', label: 'โครงการที่สนใจ' },
+    ];
+
+    exportToCSV(dataToExport, 'leads', headers);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -398,8 +477,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           )}
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6">
+        {/* Search Bar and Export Button */}
+        <div className="mb-6 flex items-center justify-between">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
@@ -410,6 +489,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
             />
           </div>
+          <button
+            onClick={activeView === 'businesses' ? handleExportBusinesses : handleExportLeads}
+            className="bg-[#123F6D] hover:bg-[#0f2f54] text-white px-4 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-all duration-300"
+          >
+            <Download className="h-5 w-5" />
+            <span>Export CSV</span>
+          </button>
         </div>
 
         {/* Content based on active view */}
