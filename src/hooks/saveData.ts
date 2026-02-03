@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { B2bLead, B2bLeadResponse, Supplier } from "../utils/types";
 import { createApiUrl, getApiHeaders } from "../utils/api";
-import { saveLeadToFirestore } from "../services/firestoreService";
 
 export const useSaveData = (Supplier: Supplier) => {
   const [data, setData] = useState<Supplier[]>([]);
@@ -54,13 +53,21 @@ export const useSaveLeadData = (LeadData: B2bLead) => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Save to Firestore instead of API
-      const result = await saveLeadToFirestore(LeadData);
-      
-      // Update state with the saved data
-      setData([result]);
-      
+
+      const response = await fetch(createApiUrl('Suplier/SaveSuplierLead'), {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify(LeadData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save lead data: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      const normalized = Array.isArray(result) ? result : [result];
+      setData(normalized);
+
       return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while saving lead data');

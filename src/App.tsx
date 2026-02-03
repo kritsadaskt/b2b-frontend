@@ -6,6 +6,7 @@ import { Search, Building2, CheckCircle, ArrowRight } from 'lucide-react';
 const AdminLogin = React.lazy(() => import('./components/AdminLogin'));
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
 const SubmitLeadForm = React.lazy(() => import('./components/SubmitLeadForm'));
+import LeadThankYou from './components/LeadThankYou';
 import { authService } from './utils/auth';
 import { useGetData } from './hooks/getData';
 import { Supplier } from './utils/types';
@@ -519,6 +520,7 @@ function App() {
             } 
           />
           <Route path="/submit" element={<SubmitLeadForm />} />
+          <Route path="/submit/thank-you" element={<LeadThankYou />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

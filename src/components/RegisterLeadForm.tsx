@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { B2bLead } from "../utils/types";
 import Select from "react-select";
 import { projectData } from "../utils/projectData";
@@ -21,16 +22,16 @@ function RegisterLeadForm() {
     TypeInterest: [],
   });
 
-  const { data: saveLeadData, loading: saveLeadDataLoading, error: saveLeadDataError, refetch: SaveLeadData } = useSaveLeadData(leadData);
+  const { loading: saveLeadDataLoading, error: saveLeadDataError, refetch: SaveLeadData } = useSaveLeadData(leadData);
+  const navigate = useNavigate();
 
   const [showAlertPopup, setShowAlertPopup] = useState(false);
-  const [alertPopupType, setAlertPopupType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+  const [alertPopupType, setAlertPopupType] = useState<'success' | 'error' | 'warning' | 'info'>('error');
   const [alertPopupTitle, setAlertPopupTitle] = useState('');
   const [alertPopupText, setAlertPopupText] = useState('');
 
   const handleConfirmAlertPopup = () => {
     setShowAlertPopup(false);
-    window.location.href = '/';
   };
 
   const mediaData = [
@@ -49,21 +50,18 @@ function RegisterLeadForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      await SaveLeadData();
+      const result = await SaveLeadData();
       if (saveLeadDataError) {
         console.error('Error saving lead data:', saveLeadDataError);
       }
-      console.log('saved');
-      setShowAlertPopup(true);
-      setAlertPopupType('success');
-      setAlertPopupTitle('บันทึกข้อมูลสำเร็จ');
-      setAlertPopupText('บันทึกข้อมูลสำเร็จ');
+      const savedResponse = Array.isArray(result) ? result[0] : result;
+      navigate('/submit/thank-you', { state: { leadData, savedResponse } });
     } catch (error) {
       console.error('Error saving lead data:', error);
       setShowAlertPopup(true);
       setAlertPopupType('error');
       setAlertPopupTitle('บันทึกข้อมูลไม่สำเร็จ');
-      setAlertPopupText('บันทึกข้อมูลไม่สำเร็จ '+error);
+      setAlertPopupText('บันทึกข้อมูลไม่สำเร็จ ' + String(error));
     }
   };
 
@@ -278,9 +276,10 @@ function RegisterLeadForm() {
 
       <button
         type="submit"
-        className="w-full bg-[#123F6D] hover:bg-[#0f2f54] text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300"
+        disabled={saveLeadDataLoading}
+        className="w-full bg-[#123F6D] hover:bg-[#0f2f54] text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        ส่งข้อมูล
+        {saveLeadDataLoading ? 'กำลังส่ง...' : 'ส่งข้อมูล'}
       </button>
       {showAlertPopup && (
         <AlertPopup
