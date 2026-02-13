@@ -1,23 +1,26 @@
-// API configuration for different environments
+// API base URL from env (VITE_ prefix required for client-side access in Vite)
+const envBase = import.meta.env.VITE_APP_API_BASE_ENDPOINT as string | undefined;
+
+// Normalize: ensure no trailing slash for clean concatenation
 const getApiBaseUrl = (): string => {
-	// Check if we're in development mode
-	const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-	// In development, use Vite proxy
-	if (isDevelopment) {
-		return '/api';
+	const base = (envBase || '').trim();
+	if (!base) {
+		console.warn('VITE_APP_API_BASE_ENDPOINT is not set. API calls will fail.');
+		return '';
 	}
-
-	// In production, use Netlify rewrite proxy (avoids CORS)
-	return '/api';
+	return base.replace(/\/+$/, '');
 };
 
 export const API_BASE_URL = getApiBaseUrl();
 
 // Helper function to create full API URLs
+// When using PHP proxy (base ends with .php), use ?path= format to avoid CORS
 export const createApiUrl = (endpoint: string): string => {
 	const normalized = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-	return `${API_BASE_URL}/${normalized}`;
+	const base = API_BASE_URL;
+	if (!base) return '';
+	const isProxy = base.endsWith('.php') || base.includes('api-proxy');
+	return isProxy ? `${base}?path=${encodeURIComponent(normalized)}` : `${base}/${normalized}`;
 };
 
 export const getApiHeaders = () => {

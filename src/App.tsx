@@ -496,7 +496,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
       <div className="min-h-screen bg-white">
         <Routes>
           <Route path="/" element={<HomePage />} />

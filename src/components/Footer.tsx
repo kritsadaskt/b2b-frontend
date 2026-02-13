@@ -1,3 +1,5 @@
+import { asset } from '../utils/assets';
+
 const footerMenus = {
     "menu1": [
       {
@@ -104,19 +106,19 @@ function Footer() {
               <h4 className="text-white text-[24px] lg:text-[26px]">ติดตามแอสเซทไวส์</h4>
               <div className="social-listed flex w-2/3 gap-3">
                 <a href="https://th-th.facebook.com/AssetWiseThailand/" title="Facebook">
-                  <img src="/images/fb-o.png" alt="Facbook" className="object-contain w-14 h-14" />
+                  <img src={asset('images/fb-o.png')} alt="Facbook" className="object-contain w-14 h-14" />
                 </a>
                 <a href="https://page.line.me/assetwise" title="Line">
-                  <img src="/images/line-o.png" alt="Line" className="object-contain w-14 h-14" />
+                  <img src={asset('images/line-o.png')} alt="Line" className="object-contain w-14 h-14" />
                 </a>
                 <a href="https://www.instagram.com/assetwisethailand" title="Instagram">
-                  <img src="/images/ig-o.png" alt="Instagram" className="object-contain w-14 h-14" />
+                  <img src={asset('images/ig-o.png')} alt="Instagram" className="object-contain w-14 h-14" />
                 </a>
                 <a href="https://www.youtube.com/c/AssetwiseChannel" title="Youtube">
-                  <img src="/images/yt-o.png" alt="Youtube" className="object-contain w-14 h-14" />
+                  <img src={asset('images/yt-o.png')} alt="Youtube" className="object-contain w-14 h-14" />
                 </a>
                 <a href="https://www.tiktok.com/@assetwise" title="Tiktok">
-                  <img src="/images/tt-o.png" alt="Tiktok" className="object-contain w-14 h-14" />
+                  <img src={asset('images/tt-o.png')} alt="Tiktok" className="object-contain w-14 h-14" />
                 </a>
               </div>
             </div>
