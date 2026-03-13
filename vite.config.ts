@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   return {
     // Keep assets at the site root; routing handles `/partners/`
-    base: '/',
+    base: '/partners/',
     plugins: [react()],
     optimizeDeps: {
       exclude: ['lucide-react'],
