@@ -496,7 +496,12 @@ function App() {
   }
 
   return (
-    <Router basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+    <Router
+      basename={
+        (import.meta.env.VITE_ROUTER_BASENAME as string | undefined) ??
+        import.meta.env.BASE_URL.replace(/\/$/, '')
+      }
+    >
       <div className="min-h-screen bg-white">
         <Routes>
           <Route path="/" element={<HomePage />} />
