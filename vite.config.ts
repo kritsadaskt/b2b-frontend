@@ -68,6 +68,7 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+      allowedHosts: ['devserver-add-path-prefix--asw-partners.netlify.app']
     },
     // Define environment variables that are safe to expose
     // define: {
