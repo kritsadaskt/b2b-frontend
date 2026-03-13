@@ -3,13 +3,9 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const base =
-    mode === 'production'
-      ? process.env.VITE_BASE_PATH || '/partners/'
-      : '/';
-
   return {
-    base,
+    // Keep assets at the site root; routing handles `/partners/`
+    base: '/',
     plugins: [react()],
     optimizeDeps: {
       exclude: ['lucide-react'],
