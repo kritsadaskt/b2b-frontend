@@ -1,2 +1,5 @@
-/api/*  https://aswinno.assetwise.co.th/APIUAT/api/:splat  200!
+# Proxy API requests server-side to avoid CORS
+/api/*  https://api.assetwise.co.th/api/:splat  200!
+
+# SPA fallback
 /*      /index.html   200

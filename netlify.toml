@@ -1,0 +1,23 @@
+[[redirects]]
+  from = "/partners/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/partners/"
+  status = 301
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# SPA fallback (API handled by public/_redirects)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

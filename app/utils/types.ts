@@ -30,11 +30,47 @@ export interface Supplier {
   MediaList: Media[];
 }
 
-export interface B2bLead {
-  fname: string;
-  tel: string;
+// Interface for transformed business data used in AdminDashboard
+export interface Business {
+  uid: string;
+  companyName: string;
+  contactName: string;
   email: string;
-  company: string;
-  interestedProject: number;
-  media: string;
+  phone: string;
+  employees: string;
+  type_id: number;
+  address: string;
+  city: string;
+  remark: string;
+  StatusList: Status[];
+  createdAt: string;
+  MediaList: Media[];
+}
+
+export interface B2bLead {
+  Fname: string;
+  Lname: string;
+  Tel: string;
+  Email: string;
+  Company: string;
+  CompanyID: string;
+  InterestedProject: number;
+  Source: string[];
+  PDPA: boolean;
+  TypeInterest: string[];
+}
+
+export interface B2bLeadResponse {
+    uid?: string;
+    Fname: string;  
+    Lname: string;
+    Tel: string;
+    Email: string;
+    Company: string;
+    CompanyID: string;
+    InterestedProject: number;
+    InterestedProjectName: string;
+    Source: string[];
+    PDPA: boolean;
+    TypeInterest: string[];
 }

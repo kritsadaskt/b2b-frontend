@@ -1,20 +1,25 @@
 import { useState, useEffect } from 'react';
+<<<<<<< HEAD:app/hooks/getData.ts
 import { Supplier } from '../utils/types';
 import { API_BASE_URL } from '../utils/api';
+=======
+import { Supplier, B2bLeadResponse } from '../utils/types';
+import { createApiUrl, getApiHeaders } from '../utils/api';
+>>>>>>> main:src/hooks/getData.ts
 
 interface DataResponse {
   Data: Supplier[];
 }
 
 interface UseGetDataResult {
-  data: Supplier[];
+  data: any[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
 }
 
 export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
-  const [data, setData] = useState<Supplier[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,17 +29,21 @@ export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
 
     try {
       setLoading(true);
+<<<<<<< HEAD:app/hooks/getData.ts
       const response = await fetch(`${API_BASE_URL}/Suplier/GetSuplier`, {
+=======
+      const response = await fetch(createApiUrl('Suplier/GetSuplier'), {
+>>>>>>> main:src/hooks/getData.ts
         method: 'POST',
         headers: {
-          'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
+          ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: urlencoded
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch data');
+        throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
       }
 
       const result: DataResponse = await response.json();
@@ -67,7 +76,7 @@ interface UseGetSupplierTypeListResult {
   refetch: () => Promise<void>;
 }
 
-export const useGetSupplierTypeList = (): UseGetSupplierTypeListResult => {
+export const useGetSupplierTypeList = (returnOnlyName: boolean = false): UseGetSupplierTypeListResult => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,20 +84,28 @@ export const useGetSupplierTypeList = (): UseGetSupplierTypeListResult => {
   const fetchData = async () => {
     try {
       setLoading(true);
+<<<<<<< HEAD:app/hooks/getData.ts
       const response = await fetch(`${API_BASE_URL}/Suplier/GetSuplierTypeList`, {
+=======
+      const response = await fetch(createApiUrl('Suplier/GetSuplierTypeList'), {
+>>>>>>> main:src/hooks/getData.ts
         method: 'GET',
         headers: {
-          'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
+          ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch supplier type list');
+        throw new Error(`Failed to fetch supplier type list: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
-      setData(result.Data || []);
+      if (returnOnlyName) {
+        setData((result.Data || []).map((item: any) => item.supplier_name));
+      } else {
+        setData(result.Data || []);
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while fetching supplier type list');
@@ -100,7 +117,7 @@ export const useGetSupplierTypeList = (): UseGetSupplierTypeListResult => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [returnOnlyName]);
 
   return {
     data,
@@ -125,16 +142,20 @@ export const useGetSupplierStatusList = (): UseGetSupplierStatusListResult => {
   const fetchData = async () => {
     try {
       setLoading(true);
+<<<<<<< HEAD:app/hooks/getData.ts
       const response = await fetch(`${API_BASE_URL}/Suplier/GetSuplierStatusList`, {
+=======
+      const response = await fetch(createApiUrl('Suplier/GetSuplierStatusList'), {
+>>>>>>> main:src/hooks/getData.ts
         method: 'GET',
         headers: {
-          'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
+          ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch supplier status list');
+        throw new Error(`Failed to fetch supplier status list: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -175,16 +196,20 @@ export const useGetSupplierMediaTypeList = (): UseGetSupplierMediaTypeListResult
   const fetchData = async () => {
     try {
       setLoading(true);
+<<<<<<< HEAD:app/hooks/getData.ts
       const response = await fetch(`${API_BASE_URL}/Suplier/GetSuplierMediaTypeList`, {
+=======
+      const response = await fetch(createApiUrl('Suplier/GetSuplierMediaTypeList'), {
+>>>>>>> main:src/hooks/getData.ts
         method: 'GET',
         headers: {
-          'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
+          ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch supplier media type list');
+        throw new Error(`Failed to fetch supplier media type list: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -210,3 +235,120 @@ export const useGetSupplierMediaTypeList = (): UseGetSupplierMediaTypeListResult
   };
 };
 
+interface SupplierLeadsResult {
+  id: string;
+  Fname: string;
+  Lname: string;
+  Tel: string;
+  Email: string;
+  CompanyID: string;
+  InterestedProject: number;
+  Source: string[];
+  TypeInterest: string[];
+}
+
+interface UseGetSupplierLeadsResult {
+  data: SupplierLeadsResult[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+export const useGetSupplierLeads = (): UseGetSupplierLeadsResult => {
+  const [data, setData] = useState<SupplierLeadsResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(createApiUrl('Suplier/GetSuplierLeads'), {
+        method: 'GET',
+        headers: {
+          ...getApiHeaders(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch supplier leads: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      setData(result.Data || []);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while fetching supplier leads');
+      console.error('Error fetching supplier leads:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch: fetchData
+  };
+};
+
+interface UseGetApiLeadsResult {
+  data: B2bLeadResponse[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+export const useGetApiLeads = (): UseGetApiLeadsResult => {
+  const [data, setData] = useState<B2bLeadResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(createApiUrl('Suplier/GetSuplierLeadList'), {
+        method: 'POST',
+        headers: {
+          ...getApiHeaders(),
+          'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch leads: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      setData(result.Data || []);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while fetching leads');
+      console.error('Error fetching leads:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch: fetchData
+  };
+};
+
+// export const getCompanyName = (companyID: string) => {
+//   const company = businesses.find((company) => company.uid === companyID);
+//   return company ? company.companyName : 'N/A';
+// };

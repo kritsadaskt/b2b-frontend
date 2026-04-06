@@ -1,15 +1,29 @@
+<<<<<<< HEAD:app/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Search, Building2, Users, CheckCircle, ArrowRight, Mail, Phone, MapPin } from 'lucide-react';
+=======
+import React, { useState, useEffect, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { Search, Building2, CheckCircle, ArrowRight } from 'lucide-react';
+
+// Lazy load admin components for code splitting
+const AdminLogin = React.lazy(() => import('./components/AdminLogin'));
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
+const SubmitLeadForm = React.lazy(() => import('./components/SubmitLeadForm'));
+import LeadThankYou from './components/LeadThankYou';
+import { authService } from './utils/auth';
+>>>>>>> main:src/App.tsx
 import { useGetData } from './hooks/getData';
 import { Supplier } from './utils/types';
 import Footer from './components/Footer';
-import RegisterLeadForm from './components/RegisterLeadForm';
+//import RegisterLeadForm from './components/RegisterLeadForm';
 import HeroBanner from './components/HeroBanner';
 import Info from './components/Info';
 import Header from './components/Header';
 import AlertPopup from './components/AlertPopup';
+import HowToApply from './components/HowToApply';
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,12 +46,13 @@ export default function HomePage() {
       second: '2-digit'
     })
   });
-  const { data: availableCompanies, loading, error } = useGetData(searchQuery);
+  const { data: availableCompanies } = useGetData(searchQuery);
   const [isSending, setIsSending] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Filter companies based on search query
   const filteredCompanies = availableCompanies.filter((company: Supplier) =>
@@ -69,7 +84,7 @@ export default function HomePage() {
       case 'Enter':
         e.preventDefault();
         if (selectedIndex >= 0) {
-          selectCompany(filteredCompanies[selectedIndex].supplier_name);
+          selectCompany(filteredCompanies[selectedIndex].supplier_name, filteredCompanies[selectedIndex].uid);
         } else {
           handleSearch(e as any);
         }
@@ -81,7 +96,7 @@ export default function HomePage() {
     }
   };
 
-  const selectCompany = (companyName: string) => {
+  const selectCompany = (companyName: string, companyUid: string) => {
     setSearchQuery(companyName);
     setShowDropdown(false);
     setSelectedIndex(-1);
@@ -90,6 +105,10 @@ export default function HomePage() {
       company.supplier_name.toLowerCase() === companyName.toLowerCase()
     );
     setSearchResult(isAvailable ? 'available' : 'not-available');
+    if (sessionStorage.getItem('selectedCompany')) {
+      sessionStorage.removeItem('selectedCompany');
+    }
+    sessionStorage.setItem('selectedCompany', JSON.stringify({ companyName: companyName, companyUid: companyUid }));
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -109,6 +128,16 @@ export default function HomePage() {
 
   const handleBusinessSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if terms are accepted
+    if (!termsAccepted) {
+      setAlertType('error');
+      setAlertTitle('กรุณายอมรับข้อกำหนด');
+      setAlertMessage('กรุณายอมรับข้อกำหนดและเงื่อนไขก่อนส่งข้อมูล');
+      setShowAlert(true);
+      return;
+    }
+    
     setIsSending(true);
     setBusinessForm({
       companyName: '',
@@ -117,10 +146,10 @@ export default function HomePage() {
       phone: '',
       employees: '',
       industry: '',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     // Send form data to API endpoint
-    fetch('https://node.assetwise.dev/webhook-test/send-b2b-mail', {
+    fetch('https://node.assetwise.dev/webhook/send-b2b-mail', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -161,40 +190,7 @@ export default function HomePage() {
       console.error('Error:', error);
     });
   };
-
-  const services = [
-    {
-      title: 'Financial Planning',
-      description: 'Comprehensive financial advisory services for your employees',
-      discount: '5-8%'
-    },
-    {
-      title: 'Investment Management',
-      description: 'Professional portfolio management with reduced fees',
-      discount: '10%'
-    },
-    {
-      title: 'Insurance Services',
-      description: 'Group insurance plans with corporate discounts',
-      discount: '7-12%'
-    },
-    {
-      title: 'Tax Consultation',
-      description: 'Expert tax advice and preparation services',
-      discount: '5-10%'
-    },
-    {
-      title: 'Estate Planning',
-      description: 'Comprehensive estate planning and legal services',
-      discount: '8-15%'
-    },
-    {
-      title: 'Retirement Planning',
-      description: '401k optimization and retirement strategy consulting',
-      discount: '5-12%'
-    }
-  ];
-
+  
   return (
     <>
       {/* Header */}
@@ -242,12 +238,14 @@ export default function HomePage() {
                          }`}
                          onMouseDown={(e) => {
                            e.preventDefault(); // Prevent blur from firing
-                           selectCompany(company.supplier_name);
-                           console.log(company.supplier_name);
+                           selectCompany(company.supplier_name, company.uid);
+                          //  console.log(company.supplier_name);
+                          //  console.log(company.uid);
                          }}
                          onClick={() => {
-                           selectCompany(company.supplier_name);
-                           console.log(company.supplier_name);
+                           selectCompany(company.supplier_name, company.uid);
+                          //  console.log(company.supplier_name);
+                          //  console.log(company.uid);
                          }}
                        >
                          {company.supplier_name}
@@ -273,9 +271,9 @@ export default function HomePage() {
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h4 className="text-xl font-semibold text-green-800 mb-2">พบข้อมูล</h4>
                   <h5 className="text-green-700 text-xl mb-4">บริษัท <strong>{searchQuery}</strong></h5>
-                  <p className="text-green-700">กรุณากรอกข้อมูลด้านล่างเพื่อยืนยันรับสิทธิ์</p>
-                  <hr className="my-7 border-green-500 w-1/3 mx-auto border-2" />
-                  <RegisterLeadForm />
+                  <div className="flex justify-center">
+                    <Link to="/submit" className="bg-green-700 hover:bg-green-800 text-white px-8 py-4 rounded-lg font-semibold shadow-lg">กรอกข้อมูลเพื่อรับสิทธิ์</Link>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
@@ -292,66 +290,6 @@ export default function HomePage() {
               )}
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" className="py-20 hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl md:text-4xl font-bold text-[#123F6D] mb-4">
-              Exclusive Employee Benefits
-            </h3>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              We offer comprehensive financial services with special discounts for employees of our partner companies. 
-              Active employees can save 5-15% on professional financial advisory services.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((service, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:border-[#123F6D]">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-semibold text-[#123F6D]">{service.title}</h4>
-                  <span className="bg-[#F1683B] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    {service.discount} OFF
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-4">{service.description}</p>
-                <div className="flex items-center text-[#123F6D] font-semibold">
-                  <Users className="h-4 w-4 mr-2" />
-                  <span className="text-sm">For verified employees only</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 bg-[#123F6D] rounded-2xl p-8 text-white text-center">
-            <h4 className="text-2xl font-bold mb-4">How It Works</h4>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="bg-[#F1683B] rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold">1</span>
-                </div>
-                <h5 className="font-semibold mb-2">Verify Employment</h5>
-                <p className="text-blue-100">Show proof of employment at a partner company</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-[#F1683B] rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold">2</span>
-                </div>
-                <h5 className="font-semibold mb-2">Choose Services</h5>
-                <p className="text-blue-100">Select from our comprehensive financial services</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-[#F1683B] rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold">3</span>
-                </div>
-                <h5 className="font-semibold mb-2">Get Discounts</h5>
-                <p className="text-blue-100">Enjoy 5-15% savings on all selected services</p>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -458,6 +396,25 @@ export default function HomePage() {
                 </div>
               </div>
 
+              <div className="flex items-start my-4">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) =>
+                    setTermsAccepted(e.target.checked)
+                  }
+                  className="mt-1 accent-[#F1683B]"
+                  style={{ width: 18, height: 18 }}
+                />
+                <label
+                  htmlFor="terms"
+                  className="ml-2 text-sm text-gray-700 select-none cursor-pointer"
+                >
+                  ข้าพเจ้ายินยอมให้ AssetWise เก็บรวบรวม ใช้ และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้าตามวัตถุประสงค์ที่ระบุไว้ใน<a href="https://assetwise.co.th/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline text-[#123F6D] hover:text-[#F1683B] transition">นโยบายความเป็นส่วนตัว</a> และ<a href="https://assetwise.co.th/terms-and-conditions/assetwise-partners/" target="_blank" rel="noopener noreferrer" className="underline text-[#123F6D] hover:text-[#F1683B] transition">ข้อกำหนดและเงื่อนไข</a> <span className="text-red-500">*</span>
+                </label>
+              </div>
+
               <button
                 type="submit"
                 className="w-full bg-[#F1683B] hover:bg-[#e5572f] text-white py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -469,6 +426,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* How to Apply Section */}
+      <HowToApply />
 
       {/* Footer */}
       <Footer />
@@ -486,3 +446,101 @@ export default function HomePage() {
     </>
   );
 }
+<<<<<<< HEAD:app/page.tsx
+=======
+
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginError, setLoginError] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check for existing session on app load
+  useEffect(() => {
+    const existingSession = authService.isAuthenticated();
+    setIsAuthenticated(existingSession);
+    setIsLoading(false);
+
+    // Optional: Show remaining time in console for debugging
+    if (existingSession) {
+      // const remainingTime = authService.getRemainingTime();
+      console.log(`Session restored.`);
+    }
+  }, []);
+
+  const handleLogin = (username: string, password: string) => {
+    // Simple authentication - in production, this should be secure
+    if (username === 'admin' && password === 'admin123') {
+      setIsAuthenticated(true);
+      setLoginError(undefined);
+      
+      // Store the session in localStorage
+      authService.setSession(true);
+      
+      console.log('Login successful.');
+    } else {
+      setLoginError('Invalid username or password');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setLoginError(undefined);
+    
+    // Clear the stored session
+    authService.clearSession();
+    
+    console.log('Logged out successfully.');
+  };
+
+  // Show loading screen while checking session
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#123F6D] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Router
+      basename={
+        (import.meta.env.VITE_ROUTER_BASENAME as string | undefined) ??
+        import.meta.env.BASE_URL.replace(/\/$/, '')
+      }
+    >
+      <div className="min-h-screen bg-white">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route 
+            path="/admin" 
+            element={
+              <Suspense fallback={
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#123F6D] mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading...</p>
+                  </div>
+                </div>
+              }>
+                {isAuthenticated ? (
+                  <AdminDashboard onLogout={handleLogout} />
+                ) : (
+                  <AdminLogin onLogin={handleLogin} error={loginError} />
+                )}
+              </Suspense>
+            } 
+          />
+          <Route path="/submit" element={<SubmitLeadForm />} />
+          <Route path="/submit/thank-you" element={<LeadThankYou />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+>>>>>>> main:src/App.tsx

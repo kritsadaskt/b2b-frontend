@@ -1,29 +1,37 @@
 import { useState } from "react";
+<<<<<<< HEAD:app/hooks/saveData.ts
 import { Supplier } from "../utils/types";
 import { API_BASE_URL } from "../utils/api";
+=======
+import { B2bLead, B2bLeadResponse, Supplier } from "../utils/types";
+import { createApiUrl, getApiHeaders } from "../utils/api";
+>>>>>>> main:src/hooks/saveData.ts
 
 export const useSaveData = (Supplier: Supplier) => {
   const [data, setData] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const header = new Headers();
-  header.append("Authorization", "Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=");
-  header.append("Content-Type", "application/json");
+  // console.log(Supplier);
+  // return;
 
   const body = JSON.stringify(Supplier);
 
   const fetchData = async () => {
     try {
       setLoading(true);
+<<<<<<< HEAD:app/hooks/saveData.ts
       const response = await fetch(`${API_BASE_URL}/Suplier/SaveSuplier`, {
+=======
+      const response = await fetch(createApiUrl('Suplier/SaveSuplier'), {
+>>>>>>> main:src/hooks/saveData.ts
         method: 'POST',
-        headers: header,
+        headers: getApiHeaders(),
         body: body
       });
     
       if (!response.ok) {
-        throw new Error('Failed to save data');
+        throw new Error(`Failed to save data: ${response.status} ${response.statusText}`);
       }
       const result = await response.json();
       setData(result);
@@ -42,5 +50,47 @@ export const useSaveData = (Supplier: Supplier) => {
     loading,
     error,
     refetch: fetchData
+  };
+}
+
+export const useSaveLeadData = (LeadData: B2bLead) => {
+  const [data, setData] = useState<B2bLeadResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const saveLeadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(createApiUrl('Suplier/SaveSuplierLead'), {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify(LeadData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save lead data: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      const normalized = Array.isArray(result) ? result : [result];
+      setData(normalized);
+
+      return result;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while saving lead data');
+      console.error('Error saving lead data:', err);
+      throw err; // Re-throw to allow component to handle the error
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return {
+    data,
+    loading,
+    error,
+    refetch: saveLeadData
   };
 }

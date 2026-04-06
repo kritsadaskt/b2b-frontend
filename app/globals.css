@@ -111,9 +111,20 @@
 
 #info {
   background-color: #f6fbfb;
-  background-image: url('/images/b2b-info-bg-d.webp');
+  background-image: var(--bg-info-desktop);
   @apply bg-cover bg-center;
   @media (max-width: 768px) {
-    background-image: url('/images/b2b-info-bg-m.webp');
+    background-image: var(--bg-info-mobile);
+  }
+}
+
+#howToApply {
+  background-image: var(--bg-steps-desktop);
+  @apply bg-cover bg-top;
+}
+
+@media (max-width: 768px) {
+  #howToApply {
+    background-image: var(--bg-steps-mobile);
   }
 }
