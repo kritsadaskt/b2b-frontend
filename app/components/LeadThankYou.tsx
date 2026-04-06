@@ -1,28 +1,39 @@
-import { useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+'use client';
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import html2canvas from "html2canvas";
-import { B2bLead, B2bLeadResponse } from "../utils/types";
-import { getLeadPdfRows, buildLeadPdfFromCanvas } from "../utils/leadPdf";
+import { B2bLead } from "../utils/types";
+import { buildLeadPdfFromCanvas } from "../utils/leadPdf";
+import { LEAD_THANK_YOU_STORAGE_KEY, type ThankYouPayload } from "../utils/thankYouStorage";
 import Header from "./Header";
 import Footer from "./Footer";
 import { Download } from "lucide-react";
 import { projectData } from "../utils/projectData";
 
-type ThankYouState = { leadData?: B2bLead; savedResponse?: B2bLeadResponse } | null;
-
 function LeadThankYou() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const router = useRouter();
   const pdfContentRef = useRef<HTMLDivElement>(null);
-  const state = location.state as ThankYouState;
-  const leadData = state?.leadData;
-  const savedResponse = state?.savedResponse;
+  const [leadData, setLeadData] = useState<B2bLead | undefined>(undefined);
 
   useEffect(() => {
-    if (!leadData) {
-      navigate("/submit", { replace: true });
+    try {
+      const raw = sessionStorage.getItem(LEAD_THANK_YOU_STORAGE_KEY);
+      if (!raw) {
+        router.replace("/submit");
+        return;
+      }
+      sessionStorage.removeItem(LEAD_THANK_YOU_STORAGE_KEY);
+      const parsed = JSON.parse(raw) as ThankYouPayload;
+      if (!parsed?.leadData) {
+        router.replace("/submit");
+        return;
+      }
+      setLeadData(parsed.leadData);
+    } catch {
+      router.replace("/submit");
     }
-  }, [leadData, navigate]);
+  }, [router]);
 
   const generatePdf = async (): Promise<ReturnType<typeof buildLeadPdfFromCanvas> | null> => {
     if (!leadData || !pdfContentRef.current) return null;
@@ -55,8 +66,6 @@ function LeadThankYou() {
     return null;
   }
 
-  const rows = getLeadPdfRows(leadData, savedResponse);
-
   return (
     <>
       <Header />
@@ -82,7 +91,6 @@ function LeadThankYou() {
       </section>
       <Footer />
 
-      {/* Hidden div for PDF capture – off-screen, Thai font for readable PDF */}
       <div
         ref={pdfContentRef}
         aria-hidden="true"

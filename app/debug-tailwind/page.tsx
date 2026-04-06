@@ -172,7 +172,7 @@ export default function DebugTailwind() {
           <div className="text-sm space-y-2">
             <p><strong>If you see this styling correctly:</strong> Tailwind CSS is working!</p>
             <p><strong>If styles are missing:</strong> Check browser dev tools for CSS loading errors</p>
-            <p><strong>If fonts don't load:</strong> Check Network tab for font file 404 errors</p>
+            <p><strong>If fonts do not load:</strong> Check Network tab for font file 404 errors</p>
             <p><strong>Current test URL:</strong> <code className="bg-gray-200 px-1 rounded">http://localhost:3000/debug-tailwind</code></p>
             
             <div className="mt-4 p-4 bg-white rounded border">

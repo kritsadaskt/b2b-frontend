@@ -1,29 +1,53 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+'use client';
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { B2bLead } from "../utils/types";
 import Select from "react-select";
 import { projectData } from "../utils/projectData";
 import { useSaveLeadData } from "../hooks/saveData";
+import { LEAD_THANK_YOU_STORAGE_KEY, type ThankYouPayload } from "../utils/thankYouStorage";
 import AlertPopup from "./AlertPopup";
 
-function RegisterLeadForm() {
-  const selectedCompany = JSON.parse(sessionStorage.getItem('selectedCompany') || '{}');
+function readSelectedCompanyFromSession(): { companyName?: string; companyUid?: string } {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(sessionStorage.getItem("selectedCompany") || "{}");
+  } catch {
+    return {};
+  }
+}
 
-  const [leadData, setLeadData] = useState<B2bLead>({
-    Fname: "",
-    Lname: "",
-    Tel: "",
-    Email: "",
-    Company: selectedCompany.companyName,
-    CompanyID: selectedCompany.companyUid,
-    InterestedProject: 0,
-    Source: [],
-    PDPA: true,
-    TypeInterest: [],
+function RegisterLeadForm() {
+  const [leadData, setLeadData] = useState<B2bLead>(() => {
+    const selectedCompany = readSelectedCompanyFromSession();
+    return {
+      Fname: "",
+      Lname: "",
+      Tel: "",
+      Email: "",
+      Company: selectedCompany.companyName ?? "",
+      CompanyID: selectedCompany.companyUid ?? "",
+      InterestedProject: 0,
+      Source: [],
+      PDPA: true,
+      TypeInterest: [],
+    };
   });
 
+  useEffect(() => {
+    const selectedCompany = readSelectedCompanyFromSession();
+    if (selectedCompany.companyName || selectedCompany.companyUid) {
+      setLeadData((prev) => ({
+        ...prev,
+        Company: selectedCompany.companyName ?? prev.Company,
+        CompanyID: selectedCompany.companyUid ?? prev.CompanyID,
+      }));
+    }
+  }, []);
+
   const { loading: saveLeadDataLoading, error: saveLeadDataError, refetch: SaveLeadData } = useSaveLeadData(leadData);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [showAlertPopup, setShowAlertPopup] = useState(false);
   const [alertPopupType, setAlertPopupType] = useState<'success' | 'error' | 'warning' | 'info'>('error');
@@ -55,7 +79,9 @@ function RegisterLeadForm() {
         console.error('Error saving lead data:', saveLeadDataError);
       }
       const savedResponse = Array.isArray(result) ? result[0] : result;
-      navigate('/submit/thank-you', { state: { leadData, savedResponse } });
+      const payload: ThankYouPayload = { leadData, savedResponse };
+      sessionStorage.setItem(LEAD_THANK_YOU_STORAGE_KEY, JSON.stringify(payload));
+      router.push('/submit/thank-you');
     } catch (error) {
       console.error('Error saving lead data:', error);
       setShowAlertPopup(true);

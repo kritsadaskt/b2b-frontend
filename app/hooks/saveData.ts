@@ -1,35 +1,23 @@
-import { useState } from "react";
-<<<<<<< HEAD:app/hooks/saveData.ts
-import { Supplier } from "../utils/types";
-import { API_BASE_URL } from "../utils/api";
-=======
-import { B2bLead, B2bLeadResponse, Supplier } from "../utils/types";
-import { createApiUrl, getApiHeaders } from "../utils/api";
->>>>>>> main:src/hooks/saveData.ts
+import { useState } from 'react';
+import { B2bLead, B2bLeadResponse, Supplier } from '../utils/types';
+import { createApiUrl, getApiHeaders } from '../utils/api';
 
 export const useSaveData = (Supplier: Supplier) => {
   const [data, setData] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // console.log(Supplier);
-  // return;
-
   const body = JSON.stringify(Supplier);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD:app/hooks/saveData.ts
-      const response = await fetch(`${API_BASE_URL}/Suplier/SaveSuplier`, {
-=======
       const response = await fetch(createApiUrl('Suplier/SaveSuplier'), {
->>>>>>> main:src/hooks/saveData.ts
         method: 'POST',
         headers: getApiHeaders(),
-        body: body
+        body: body,
       });
-    
+
       if (!response.ok) {
         throw new Error(`Failed to save data: ${response.status} ${response.statusText}`);
       }
@@ -43,15 +31,15 @@ export const useSaveData = (Supplier: Supplier) => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return {
     data,
     loading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
   };
-}
+};
 
 export const useSaveLeadData = (LeadData: B2bLead) => {
   const [data, setData] = useState<B2bLeadResponse[]>([]);
@@ -81,16 +69,16 @@ export const useSaveLeadData = (LeadData: B2bLead) => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while saving lead data');
       console.error('Error saving lead data:', err);
-      throw err; // Re-throw to allow component to handle the error
+      throw err;
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return {
     data,
     loading,
     error,
-    refetch: saveLeadData
+    refetch: saveLeadData,
   };
-}
+};

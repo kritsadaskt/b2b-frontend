@@ -30,7 +30,12 @@ const nextConfig = {
     ];
   },
   images: {
-    domains: ['aswinno.assetwise.co.th'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'aswinno.assetwise.co.th',
+      },
+    ],
   },
 };
 

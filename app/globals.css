@@ -107,6 +107,14 @@
   html, body {
     font-family: 'DBHeavent', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   }
+
+  /* Backgrounds for #info / #howToApply (previously set from Vite entry). Paths are under /public. */
+  :root {
+    --bg-info-desktop: url('/images/b2b-info-bg-d.webp');
+    --bg-info-mobile: url('/images/b2b-info-bg-m.webp');
+    --bg-steps-desktop: url('/images/steps-bg-desktop.webp');
+    --bg-steps-mobile: url('/images/steps-bg-mobile.webp');
+  }
 }
 
 #info {

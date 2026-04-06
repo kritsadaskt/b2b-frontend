@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
-<<<<<<< HEAD:app/hooks/getData.ts
-import { Supplier } from '../utils/types';
-import { API_BASE_URL } from '../utils/api';
-=======
 import { Supplier, B2bLeadResponse } from '../utils/types';
 import { createApiUrl, getApiHeaders } from '../utils/api';
->>>>>>> main:src/hooks/getData.ts
 
 interface DataResponse {
   Data: Supplier[];
@@ -25,21 +20,17 @@ export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
 
   const fetchData = async () => {
     const urlencoded = new URLSearchParams();
-    urlencoded.append("supplier_name", "");
+    urlencoded.append('supplier_name', '');
 
     try {
       setLoading(true);
-<<<<<<< HEAD:app/hooks/getData.ts
-      const response = await fetch(`${API_BASE_URL}/Suplier/GetSuplier`, {
-=======
       const response = await fetch(createApiUrl('Suplier/GetSuplier'), {
->>>>>>> main:src/hooks/getData.ts
         method: 'POST',
         headers: {
           ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: urlencoded
+        body: urlencoded,
       });
 
       if (!response.ok) {
@@ -65,7 +56,7 @@ export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
     data,
     loading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
   };
 };
 
@@ -84,16 +75,12 @@ export const useGetSupplierTypeList = (returnOnlyName: boolean = false): UseGetS
   const fetchData = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD:app/hooks/getData.ts
-      const response = await fetch(`${API_BASE_URL}/Suplier/GetSuplierTypeList`, {
-=======
       const response = await fetch(createApiUrl('Suplier/GetSuplierTypeList'), {
->>>>>>> main:src/hooks/getData.ts
         method: 'GET',
         headers: {
           ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
-        }
+        },
       });
 
       if (!response.ok) {
@@ -123,7 +110,7 @@ export const useGetSupplierTypeList = (returnOnlyName: boolean = false): UseGetS
     data,
     loading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
   };
 };
 
@@ -142,16 +129,12 @@ export const useGetSupplierStatusList = (): UseGetSupplierStatusListResult => {
   const fetchData = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD:app/hooks/getData.ts
-      const response = await fetch(`${API_BASE_URL}/Suplier/GetSuplierStatusList`, {
-=======
       const response = await fetch(createApiUrl('Suplier/GetSuplierStatusList'), {
->>>>>>> main:src/hooks/getData.ts
         method: 'GET',
         headers: {
           ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
-        }
+        },
       });
 
       if (!response.ok) {
@@ -177,7 +160,7 @@ export const useGetSupplierStatusList = (): UseGetSupplierStatusListResult => {
     data,
     loading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
   };
 };
 
@@ -196,16 +179,12 @@ export const useGetSupplierMediaTypeList = (): UseGetSupplierMediaTypeListResult
   const fetchData = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD:app/hooks/getData.ts
-      const response = await fetch(`${API_BASE_URL}/Suplier/GetSuplierMediaTypeList`, {
-=======
       const response = await fetch(createApiUrl('Suplier/GetSuplierMediaTypeList'), {
->>>>>>> main:src/hooks/getData.ts
         method: 'GET',
         headers: {
           ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
-        }
+        },
       });
 
       if (!response.ok) {
@@ -231,7 +210,7 @@ export const useGetSupplierMediaTypeList = (): UseGetSupplierMediaTypeListResult
     data,
     loading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
   };
 };
 
@@ -267,7 +246,7 @@ export const useGetSupplierLeads = (): UseGetSupplierLeadsResult => {
         headers: {
           ...getApiHeaders(),
           'Content-Type': 'application/x-www-form-urlencoded',
-        }
+        },
       });
 
       if (!response.ok) {
@@ -293,7 +272,7 @@ export const useGetSupplierLeads = (): UseGetSupplierLeadsResult => {
     data,
     loading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
   };
 };
 
@@ -316,9 +295,9 @@ export const useGetApiLeads = (): UseGetApiLeadsResult => {
         method: 'POST',
         headers: {
           ...getApiHeaders(),
-          'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
+          Authorization: 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
           'Content-Type': 'application/json',
-        }
+        },
       });
 
       if (!response.ok) {
@@ -344,11 +323,6 @@ export const useGetApiLeads = (): UseGetApiLeadsResult => {
     data,
     loading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
   };
 };
-
-// export const getCompanyName = (companyID: string) => {
-//   const company = businesses.find((company) => company.uid === companyID);
-//   return company ? company.companyName : 'N/A';
-// };
