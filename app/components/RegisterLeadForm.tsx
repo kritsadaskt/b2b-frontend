@@ -7,16 +7,11 @@ import Select from "react-select";
 import { projectData } from "../utils/projectData";
 import { useSaveLeadData } from "../hooks/saveData";
 import { LEAD_THANK_YOU_STORAGE_KEY, type ThankYouPayload } from "../utils/thankYouStorage";
+import {
+  clearSelectedCompanyFromSession,
+  readSelectedCompanyFromSession,
+} from "../utils/selectedCompanySession";
 import AlertPopup from "./AlertPopup";
-
-function readSelectedCompanyFromSession(): { companyName?: string; companyUid?: string } {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(sessionStorage.getItem("selectedCompany") || "{}");
-  } catch {
-    return {};
-  }
-}
 
 function RegisterLeadForm() {
   const [leadData, setLeadData] = useState<B2bLead>(() => {
@@ -81,6 +76,7 @@ function RegisterLeadForm() {
       const savedResponse = Array.isArray(result) ? result[0] : result;
       const payload: ThankYouPayload = { leadData, savedResponse };
       sessionStorage.setItem(LEAD_THANK_YOU_STORAGE_KEY, JSON.stringify(payload));
+      clearSelectedCompanyFromSession();
       router.push('/submit/thank-you');
     } catch (error) {
       console.error('Error saving lead data:', error);

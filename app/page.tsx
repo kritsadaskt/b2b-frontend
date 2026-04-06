@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Building2, CheckCircle, ArrowRight } from 'lucide-react';
 import { useGetData } from './hooks/getData';
@@ -11,8 +11,13 @@ import Info from './components/Info';
 import Header from './components/Header';
 import AlertPopup from './components/AlertPopup';
 import HowToApply from './components/HowToApply';
+import { clearSelectedCompanyFromSession } from './utils/selectedCompanySession';
 
 export default function HomePage() {
+  useLayoutEffect(() => {
+    clearSelectedCompanyFromSession();
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);

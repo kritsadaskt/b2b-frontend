@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import ClearSelectedCompanyOnLeaveSubmit from './components/ClearSelectedCompanyOnLeaveSubmit';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body className="font-sans">
+        <ClearSelectedCompanyOnLeaveSubmit />
         {children}
       </body>
     </html>
