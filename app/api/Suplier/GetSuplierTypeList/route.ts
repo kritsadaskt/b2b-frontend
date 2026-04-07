@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await fetch('https://aswinno.assetwise.co.th/APIUAT/api/Suplier/GetSuplierTypeList', {
+    const response = await fetch('https://aswinno.assetwise.co.th/APIUAT/Suplier/GetSuplierTypeList', {
       method: 'GET',
       headers: {
         'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',

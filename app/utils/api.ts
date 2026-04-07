@@ -1,17 +1,12 @@
-const PROD_API_BASE = 'https://aswinno.assetwise.co.th/APIUAT';
-
-// In development, Next rewrites `/api/*` (see next.config.js). In production, use env or default.
+// Browser calls must use same-origin `/api/*` so Next rewrites (next.config.js) or app/api
+// route handlers proxy upstream. Pointing `NEXT_PUBLIC_*` at the real API host causes
+// cross-origin requests and CORS failures on Vercel.
 const getApiBaseUrl = (): string => {
-  if (process.env.NODE_ENV === 'development') {
-    return '/api';
-  }
-
   const envBase = (process.env.NEXT_PUBLIC_APP_API_BASE_ENDPOINT || '').trim();
   if (envBase) {
     return envBase.replace(/\/+$/, '');
   }
-
-  return PROD_API_BASE;
+  return '/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
