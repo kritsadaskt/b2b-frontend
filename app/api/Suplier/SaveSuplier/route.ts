@@ -4,7 +4,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     
-    const response = await fetch('https://aswinno.assetwise.co.th/APIUAT/Suplier/SaveSuplier', {
+    const response = await fetch('https://api.assetwise.co.th/api/Suplier/SaveSuplier', {
       method: 'POST',
       headers: {
         'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
