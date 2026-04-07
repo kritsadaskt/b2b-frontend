@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supplierApiUpstreamUrl } from '../../../utils/supplierUpstream';
 import {
   forwardSupplierJsonResponse,
@@ -6,23 +6,20 @@ import {
   SUPPLIER_CORS_HEADERS,
 } from '../../../utils/supplierProxy';
 
-export async function POST(request: NextRequest) {
+export async function GET() {
   try {
-    const body = await request.text();
-
-    const response = await fetch(supplierApiUpstreamUrl('Suplier/GetSuplier'), {
-      method: 'POST',
+    const response = await fetch(supplierApiUpstreamUrl('Suplier/GetSuplierLeads'), {
+      method: 'GET',
       headers: {
         ...SUPPLIER_AUTH_HEADER,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'application/json',
       },
-      body,
       cache: 'no-store',
     });
 
-    return forwardSupplierJsonResponse(response, 'GetSuplier');
+    return forwardSupplierJsonResponse(response, 'GetSuplierLeads');
   } catch (error) {
-    console.warn('[supplier-api] GetSuplier fetch failed:', error);
+    console.warn('[supplier-api] GetSuplierLeads fetch failed:', error);
     return NextResponse.json(
       { error: 'Proxy fetch failed' },
       { status: 502, headers: SUPPLIER_CORS_HEADERS },

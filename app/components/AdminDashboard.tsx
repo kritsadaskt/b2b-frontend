@@ -219,7 +219,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const handleEditBusinessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log(editBusiness);
+    //console.log(editBusiness);
     //return;
 
     try {
@@ -583,7 +583,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <button onClick={() => {
                             setShowEditModal(true);
                             setEditBusiness(business);
-                            console.log(business);
+                            //console.log(business);
                           }} className="px-4 py-2 text-accent rounded-full hover:bg-gray-200 font-semibold transition-all duration-300">
                             <SquarePen className="h-5 w-5" />
                           </button>

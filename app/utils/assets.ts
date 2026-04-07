@@ -1,9 +1,10 @@
 /**
- * Prefix for URLs under `public/` (e.g. '' or '/partners').
- * Must match `basePath` in next.config.js — both read `NEXT_PUBLIC_BASE_PATH`.
+ * Base path segment without slashes (e.g. '' or 'partners').
+ * Env may be `/partners` or `partners` — we strip slashes so joining never yields `//partners/...`,
+ * which browsers treat as protocol-relative (`http://partners/...`).
  */
 export const getStaticPathPrefix = (): string => {
-  return (process.env.NEXT_PUBLIC_BASE_PATH || '').trim().replace(/\/$/, '');
+  return (process.env.NEXT_PUBLIC_BASE_PATH || '').trim().replace(/^\/+|\/+$/g, '');
 };
 
 /**

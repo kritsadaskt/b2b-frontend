@@ -1,55 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supplierApiUpstreamUrl } from '../../../utils/supplierUpstream';
+import {
+  forwardSupplierJsonResponse,
+  SUPPLIER_AUTH_HEADER,
+  SUPPLIER_CORS_HEADERS,
+} from '../../../utils/supplierProxy';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
-    
-    const response = await fetch('https://api.assetwise.co.th/api/Suplier/SaveSuplier', {
+
+    const response = await fetch(supplierApiUpstreamUrl('Suplier/SaveSuplier'), {
       method: 'POST',
       headers: {
-        'Authorization': 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
+        ...SUPPLIER_AUTH_HEADER,
         'Content-Type': 'application/json',
       },
-      body: body,
+      body,
+      cache: 'no-store',
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    return NextResponse.json(data, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
+    return forwardSupplierJsonResponse(response, 'SaveSuplier');
   } catch (error) {
-    console.error('API Error:', error);
+    console.warn('[supplier-api] SaveSuplier fetch failed:', error);
     return NextResponse.json(
-      { error: 'Failed to save supplier data' },
-      { 
-        status: 500,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        },
-      }
+      { error: 'Proxy fetch failed' },
+      { status: 502, headers: SUPPLIER_CORS_HEADERS },
     );
   }
 }
 
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
+    headers: SUPPLIER_CORS_HEADERS,
   });
 }

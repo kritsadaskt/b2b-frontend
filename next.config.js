@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
-const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').trim().replace(/\/$/, '');
+const baseSegment = (process.env.NEXT_PUBLIC_BASE_PATH || '')
+  .trim()
+  .replace(/^\/+|\/+$/g, '');
+const basePath = baseSegment ? `/${baseSegment}` : '';
+
+const supplierApiBase = (
+  process.env.SUPPLIER_API_BASE_URL || 'https://aswinno.assetwise.co.th/APIUAT'
+)
+  .trim()
+  .replace(/\/+$/, '');
 
 const nextConfig = {
   ...(basePath ? { basePath } : {}),
@@ -7,7 +16,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://api.assetwise.co.th/api/:path*',
+        destination: `${supplierApiBase}/:path*`,
       },
     ];
   },
@@ -37,6 +46,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'api.assetwise.co.th',
+      },
+      {
+        protocol: 'https',
+        hostname: 'aswinno.assetwise.co.th',
       },
     ],
   },

@@ -247,11 +247,11 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     // Get type column index early for additional validation
     const typeIndex = findColumnIndex('type');
     
-    console.log('=== FILE STRUCTURE VALIDATION ===');
-    console.log('Headers found:', headers);
-    console.log('Validation result:', validation);
-    console.log('Type column index:', typeIndex);
-    console.log('================================');
+    // console.log('=== FILE STRUCTURE VALIDATION ===');
+    // console.log('Headers found:', headers);
+    // console.log('Validation result:', validation);
+    // console.log('Type column index:', typeIndex);
+    // console.log('================================');
     
     if (!validation.isValid) {
       const errorMessage = [
@@ -428,7 +428,7 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
         }
 
         await response.json();
-        console.log(`Successfully uploaded supplier ${i + 1}/${suppliers.length}:`, supplier.supplier_name);
+        //console.log(`Successfully uploaded supplier ${i + 1}/${suppliers.length}:`, supplier.supplier_name);
 
         // Add a small delay between requests to avoid overwhelming the server
         await new Promise(resolve => setTimeout(resolve, 100));

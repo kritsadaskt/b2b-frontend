@@ -293,11 +293,7 @@ export const useGetApiLeads = (): UseGetApiLeadsResult => {
       setLoading(true);
       const response = await fetch(createApiUrl('Suplier/GetSuplierLeadList'), {
         method: 'POST',
-        headers: {
-          ...getApiHeaders(),
-          Authorization: 'Basic c3VwbGllcjpzdXBsaWVyQDIwMjU=',
-          'Content-Type': 'application/json',
-        },
+        headers: getApiHeaders(),
       });
 
       if (!response.ok) {
