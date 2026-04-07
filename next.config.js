@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
+const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').trim().replace(/\/$/, '');
+
 const nextConfig = {
+  ...(basePath ? { basePath } : {}),
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://aswinno.assetwise.co.th/APIUAT/:path*',
+        destination: 'https://api.assetwise.co.th/api/:path*',
       },
     ];
   },
@@ -33,7 +36,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'aswinno.assetwise.co.th',
+        hostname: 'api.assetwise.co.th',
       },
     ],
   },

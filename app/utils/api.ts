@@ -1,12 +1,14 @@
-// Browser calls must use same-origin `/api/*` so Next rewrites (next.config.js) or app/api
-// route handlers proxy upstream. Pointing `NEXT_PUBLIC_*` at the real API host causes
-// cross-origin requests and CORS failures on Vercel.
+import { getStaticPathPrefix } from './assets';
+
+// Browser calls must use same-origin `/api/*` (with `basePath` prefix when set) so Next
+// rewrites or app/api route handlers proxy upstream.
 const getApiBaseUrl = (): string => {
   const envBase = (process.env.NEXT_PUBLIC_APP_API_BASE_ENDPOINT || '').trim();
   if (envBase) {
     return envBase.replace(/\/+$/, '');
   }
-  return '/api';
+  const prefix = getStaticPathPrefix();
+  return prefix ? `/${prefix}/api` : '/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

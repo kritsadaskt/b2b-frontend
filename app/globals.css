@@ -1,121 +1,15 @@
-/* Custom Font - DBHeavent */
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Thin.woff') format('woff'),
-       url('/fonts/DBHeavent-Thin.woff2') format('woff2');
-  font-weight: 200;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Thin-It.woff') format('woff'),
-       url('/fonts/DBHeavent-Thin-it.woff2') format('woff2');
-  font-weight: 200;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Light.woff') format('woff'),
-       url('/fonts/DBHeavent-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Light-It.woff') format('woff'),
-       url('/fonts/DBHeavent-Light-It.woff2') format('woff2');
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent.woff2') format('woff2'),
-       url('/fonts/DBHeavent.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Med.woff') format('woff'),
-       url('/fonts/DBHeavent-Med.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Med-It.woff') format('woff'),
-       url('/fonts/DBHeavent-Med-It.woff2') format('woff2');
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Bold.woff2') format('woff2'),
-       url('/fonts/DBHeavent-Bold.woff') format('woff');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Bold-It.woff') format('woff'),
-       url('/fonts/DBHeavent-Bold-It.woff2') format('woff2');
-  font-weight: bold;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Black.woff2') format('woff2'),
-       url('/fonts/DBHeavent-Black.woff') format('woff');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DBHeavent';
-  src: url('/fonts/DBHeavent-Black-It.woff') format('woff'),
-       url('/fonts/DBHeavent-Black-It.woff2') format('woff2');
-  font-weight: 900;
-  font-style: italic;
-  font-display: swap;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Apply DBHeavent globally */
+/* Apply DBHeavent globally — @font-face lives in FontFaceStyles.tsx (basePath-safe). */
 @layer base {
   html, body {
     font-family: 'DBHeavent', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   }
-
-  /* Backgrounds for #info / #howToApply (previously set from Vite entry). Paths are under /public. */
-  :root {
-    --bg-info-desktop: url('/images/b2b-info-bg-d.webp');
-    --bg-info-mobile: url('/images/b2b-info-bg-m.webp');
-    --bg-steps-desktop: url('/images/steps-bg-desktop.webp');
-    --bg-steps-mobile: url('/images/steps-bg-mobile.webp');
-  }
 }
+
+/* Background vars --bg-* are set on <html> in layout.tsx */
 
 #info {
   background-color: #f6fbfb;
