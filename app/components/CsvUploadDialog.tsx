@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, Upload, FileText, FileSpreadsheet } from 'lucide-react';
+import { X, Upload, FileText, FileSpreadsheet, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Supplier } from '../utils/types';
 import { getApiHeaders, createApiUrl } from '../utils/api';
+import { publicAssetPath } from '../utils/assets';
 import AlertPopup from './AlertPopup';
 
 interface CsvUploadDialogProps {
@@ -33,7 +34,9 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
     { id: 2, name: 'องค์กร' },
     { id: 3, name: 'ASW Partner' },
     { id: 4, name: 'sponsor' },
-    { id: 5, name: 'other' }
+    { id: 5, name: 'other' },
+    { id: 6, name: 'สถานศึกษา' },
+    { id: 7, name: 'หน่วยงานราชการ' }
   ]
 
   const processCsvFile = (file: File) => {
@@ -427,8 +430,22 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
           throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
 
-        await response.json();
-        //console.log(`Successfully uploaded supplier ${i + 1}/${suppliers.length}:`, supplier.supplier_name);
+        // API may return HTTP 200 with `{ Success: false, Message: "..." }`,
+        // so we must inspect the body and treat that as a failure too.
+        const result = (await response.json().catch(() => null)) as
+          | { Success?: boolean; success?: boolean; Message?: string; message?: string }
+          | null;
+
+        const isSuccess =
+          result?.Success === true || result?.success === true;
+
+        if (!isSuccess) {
+          const serverMessage =
+            result?.Message ||
+            result?.message ||
+            'เซิร์ฟเวอร์ตอบกลับ Success: false โดยไม่ระบุสาเหตุ';
+          throw new Error(serverMessage);
+        }
 
         // Add a small delay between requests to avoid overwhelming the server
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -488,7 +505,32 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
           </button>
         </div>
         
-        <p className="text-gray-600 mb-6">อัพโหลดไฟล์ CSV หรือ Excel เพื่ออัพเดตข้อมูลบริษัท</p>
+        <p className="text-gray-600 mb-4">อัพโหลดไฟล์ CSV หรือ Excel เพื่ออัพเดตข้อมูลบริษัท</p>
+
+        <div className="mb-6 rounded-lg border border-[#123F6D]/20 bg-slate-50 p-4">
+          <p className="text-sm font-semibold text-[#123F6D] mb-1">ดาวน์โหลดเทมเพลต</p>
+          <p className="text-sm text-gray-600 mb-3">
+            ไฟล์ตัวอย่างมีหัวตารางและแถวตัวอย่าง 1 แถว ลำดับคอลัมน์สอดคล้องกับระบบ (คอลัมน์ที่ 9 = หมายเหตุ, คอลัมน์ 11–17 = ช่องทางสื่อ, คอลัมน์ 19 เป็นต้นไป = ข้อความที่รวมเข้าหมายเหตุอัตโนมัติ)
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href={publicAssetPath('supplier-upload-template.csv')}
+              download="supplier-upload-template.csv"
+              className="inline-flex items-center gap-2 rounded-lg border border-[#123F6D] bg-white px-4 py-2 text-sm font-semibold text-[#123F6D] transition-colors hover:bg-[#123F6D]/5"
+            >
+              <Download className="h-4 w-4 shrink-0" />
+              ไฟล์ CSV
+            </a>
+            <a
+              href={publicAssetPath('supplier-upload-template.xlsx')}
+              download="supplier-upload-template.xlsx"
+              className="inline-flex items-center gap-2 rounded-lg border border-[#123F6D] bg-white px-4 py-2 text-sm font-semibold text-[#123F6D] transition-colors hover:bg-[#123F6D]/5"
+            >
+              <FileSpreadsheet className="h-4 w-4 shrink-0 text-green-600" />
+              ไฟล์ Excel (.xlsx)
+            </a>
+          </div>
+        </div>
         
         {/* File Upload Area */}
         <div 

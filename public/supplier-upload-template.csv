@@ -1,0 +1,2 @@
+﻿email,supplier_name,street,city,sales_person,telephone,head_count,type,remark,date_or_notes,media_intranet,media_edm,media_line,media_standee,media_poster,media_booth,media_leaflet,spacer,extra_remark_1,extra_remark_2
+example@company.co.th,บริษัทตัวอย่าง จำกัด,99 ถนนสุขุมวิท,กรุงเทพ,คุณตัวอย่าง,021234567,100,องค์กร,หมายเหตุหลัก,มี.ค.-25,Y,Y,,,,,,,รายละเอียดเพิ่มเติมคอลัมน์ S,รายละเอียดเพิ่มเติมคอลัมน์ T
