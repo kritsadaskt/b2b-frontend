@@ -13,19 +13,25 @@ export interface Supplier {
   uid: string;
   type_id: number;
   type_name: string;
-  email: string;
+  email: string | null;
   supplier_name: string;
-  business_type: string;
+  business_type: string | null;
   contact_date: string;
   update_time: string;
   is_active: boolean;
-  address: string;
-  city: string;
-  sales_person: string;
-  telephone: string;
+  address: string | null;
+  city: string | null;
+  province?: number | null;
+  district?: number | null;
+  subDistrict?: number | null;
+  province_name?: string | null;
+  district_name?: string | null;
+  subDistrict_name?: string | null;
+  sales_person: string | null;
+  telephone: string | null;
   head_count: number;
-  remark: string;
-  media_remark: string;
+  remark: string | null;
+  media_remark: string | null;
   StatusList: Status[];
   MediaList: Media[];
 }
@@ -39,9 +45,16 @@ export interface Business {
   phone: string;
   employees: string;
   type_id: number;
-  address: string;
+  /** ที่อยู่รวมสำหรับแสดงในตาราง */
+  fullAddress: string;
+  /** ที่อยู่ (ถนน/เลขที่) สำหรับแก้ไข */
+  streetAddress: string;
   city: string;
+  province: number | null;
+  district: number | null;
+  subDistrict: number | null;
   remark: string;
+  is_active: boolean;
   StatusList: Status[];
   createdAt: string;
   MediaList: Media[];

@@ -2,11 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload, ChevronLeft, ChevronRight, Users, Download } from 'lucide-react';
 import { authService } from '../utils/auth';
 import { Supplier, Business } from '../utils/types';
+import { formatOptionalText, formatSupplierAddress } from '../utils/supplierAddress';
+import { PROVINCE_SELECT_OPTIONS } from '../utils/thailandProvinces';
+import {
+  findDistrictOption,
+  findSubDistrictOption,
+  getDistrictOptions,
+  getSubDistrictOptions,
+  locationSelectStyles,
+} from '../utils/thailandLocations';
 import { useGetData, useGetSupplierMediaTypeList, useGetSupplierStatusList, useGetSupplierTypeList, useGetApiLeads } from '../hooks/getData';
 import Select from 'react-select';
 import { useSaveData } from '../hooks/saveData';
 import AlertPopup from './AlertPopup';
 import CsvUploadDialog from '../components/CsvUploadDialog';
+import { CopyIcon } from 'lucide-react';
 // import ApiTest from './ApiTest';
 // import FunctionTest from './FunctionTest';
 
@@ -16,6 +26,45 @@ interface DataResponse {
 
 interface AdminDashboardProps {
   onLogout: () => void;
+}
+
+const NON_COPYABLE_VALUES = new Set(['—', 'N/A', '']);
+
+function CopyableText({ value, className = '' }: { value: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  const trimmed = value.trim();
+  const canCopy = trimmed.length > 0 && !NON_COPYABLE_VALUES.has(trimmed);
+
+  const handleCopy = async () => {
+    if (!canCopy) return;
+    try {
+      await navigator.clipboard.writeText(trimmed);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  if (!canCopy) {
+    return <span className={`text-sm text-gray-900 ${className}`}>{value}</span>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className={`text-sm text-left transition-colors rounded px-0.5 -mx-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#123F6D] flex items-center gap-2 ${
+        copied
+          ? 'text-green-700 font-medium'
+          : 'text-gray-900 hover:text-[#123F6D]'
+      } ${className}`}
+      title={copied ? 'คัดลอกแล้ว' : 'คลิกเพื่อคัดลอก'}
+    >
+      {copied ? 'คัดลอกแล้ว' : value}
+      <CopyIcon className="h-3 w-3" />
+    </button>
+  );
 }
 
 export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
@@ -35,6 +84,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     type_id: 0,
     address: '',
     city: '',
+    province: null,
+    district: null,
+    subDistrict: null,
     remark: '',
     media_remark: '',
     MediaList: [],
@@ -53,9 +105,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     phone: '',
     employees: '',
     type_id: 0,
-    address: '',
+    fullAddress: '',
+    streetAddress: '',
     city: '',
+    province: null,
+    district: null,
+    subDistrict: null,
     remark: '',
+    is_active: true,
     StatusList: [],
     createdAt: '',
     MediaList: [],
@@ -71,7 +128,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { data: bussinessData, loading: loadingData, error: errorData, refetch: refetchBusinesses } = useGetData();
+  const { data: bussinessData, loading: loadingData, error: errorData, refetch: refetchBusinesses } = useGetData({
+    supplier_name: '',
+    is_active: true,
+  });
   const { data: leadsData, loading: loadingLeads, error: errorLeads, refetch: refetchLeads } = useGetApiLeads();
   //const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
   const supplierTypeList = [
@@ -93,8 +153,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     head_count: parseInt(editBusiness.employees) || 0,
     uid: editBusiness.uid,
     email: editBusiness.email,
-    address: editBusiness.address,
+    address: editBusiness.streetAddress,
     city: editBusiness.city,
+    province: editBusiness.province,
+    district: editBusiness.district,
+    subDistrict: editBusiness.subDistrict,
     remark: editBusiness.remark,
     type_id: editBusiness.type_id,
     MediaList: editBusiness.MediaList,
@@ -103,7 +166,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     contact_date: editBusiness.createdAt,
     update_time: new Date().toISOString(),
     business_type: '',
-    is_active: true,
+    is_active: editBusiness.is_active,
     media_remark: ''
   });
   const { data: saveData = [], loading: loadingSaveData = false, error: errorSaveData = null, refetch: refetchSaveData } = saveDataResult || {};
@@ -138,25 +201,31 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const fetchBusinesses = async () => {
     try {
-      // console.log(bussinessData);
+      console.log(bussinessData);
 
       // Transform API data to match our interface
-      const transformedData = Array.isArray(bussinessData) ? bussinessData
-        .sort((a, b) => {
-          const dateA = new Date(a.contact_date || 0);
-          const dateB = new Date(b.contact_date || 0);
-          return dateB.getTime() - dateA.getTime(); // Sort descending (newest first)
-        })
+      const transformedData = Array.isArray(bussinessData) ? [...bussinessData]
+        .filter((item: Supplier) => item.is_active === true)
+        .sort((a, b) =>
+          (a.supplier_name ?? '').localeCompare(b.supplier_name ?? '', 'th', {
+            sensitivity: 'base',
+          }),
+        )
         .map((item: Supplier, index: number) => ({
           uid: item.uid || `business-${index}`,
-          companyName: item.supplier_name || 'N/A',
-          contactName: item.sales_person || 'N/A', 
-          email: item.email || 'N/A',
-          address: item.address || 'N/A',
-          city: item.city || 'N/A',
-          remark: item.remark || 'N/A',
-          phone: item.telephone || 'N/A',
-          employees: item.head_count.toString() || 'N/A',
+          companyName: formatOptionalText(item.supplier_name),
+          contactName: formatOptionalText(item.sales_person),
+          email: formatOptionalText(item.email),
+          fullAddress: formatSupplierAddress(item),
+          streetAddress: item.address?.trim() ?? '',
+          city: item.city?.trim() ?? '',
+          province: item.province ?? null,
+          district: item.district ?? null,
+          subDistrict: item.subDistrict ?? null,
+          remark: formatOptionalText(item.remark),
+          is_active: item.is_active === true,
+          phone: formatOptionalText(item.telephone),
+          employees: item.head_count != null ? String(item.head_count) : '—',
           type_id: item.type_id || 0,
           StatusList: item.StatusList || [],
           createdAt: item.contact_date || new Date().toISOString(),
@@ -193,7 +262,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           head_count: 0,
           type_id: 0,
           address: '',
-          city: '', 
+          city: '',
+          province: null,
+          district: null,
+          subDistrict: null,
           remark: '',
           media_remark: '',
           MediaList: [],
@@ -242,9 +314,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           phone: '',
           employees: '',
           type_id: 0,
-          address: '',
+          fullAddress: '',
+          streetAddress: '',
           city: '',
+          province: null,
+          district: null,
+          subDistrict: null,
           remark: '',
+          is_active: true,
           StatusList: [],
           createdAt: '',
           MediaList: [],
@@ -266,11 +343,15 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const filteredBusinesses = businesses.filter(business =>
-    business.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    business.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    business.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredBusinesses = businesses.filter((business) => {
+    const q = searchTerm.toLowerCase();
+    return (
+      business.companyName.toLowerCase().includes(q) ||
+      business.contactName.toLowerCase().includes(q) ||
+      business.email.toLowerCase().includes(q) ||
+      business.fullAddress.toLowerCase().includes(q)
+    );
+  });
 
   // Pagination calculations
   const totalItems = filteredBusinesses.length;
@@ -327,9 +408,15 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   // Handle export for businesses
   const handleExportBusinesses = () => {
     const headers = [
+      { key: 'uid', label: 'uid' },
       { key: 'email', label: 'email' },
       { key: 'companyName', label: 'supplier_name' },
-      { key: 'address', label: 'address' },
+      { key: 'streetAddress', label: 'address' },
+      { key: 'city', label: 'city' },
+      { key: 'province', label: 'province' },
+      { key: 'district', label: 'district' },
+      { key: 'subDistrict', label: 'subDistrict' },
+      { key: 'fullAddress', label: 'full_address' },
       { key: 'contactName', label: 'contact_person' },
       { key: 'phone', label: 'telephone' },
       { key: 'employees', label: 'head_count' },
@@ -472,7 +559,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         </div>
 
         {/* Search Bar and Export Button */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
@@ -520,13 +607,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      อีเมล
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       ชื่อบริษัท
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ที่อยู่
+                      อีเมล
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       ชื่อผู้ติดต่อ
@@ -536,9 +620,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       จำนวนพนักงาน
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      หมายเหตุ
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       จัดการ
@@ -556,9 +637,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     currentItems.map((business) => (
                       <tr key={business.uid} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{business.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <Building2 className="h-5 w-5 text-[#123F6D] mr-3" />
                             <div className="text-sm font-medium text-gray-900">
@@ -567,19 +645,16 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{business.address}</div>
+                          <CopyableText value={business.email} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{business.contactName}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{business.phone}</div>
+                          <CopyableText value={business.phone} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{business.employees}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{business.remark}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button onClick={() => {
@@ -803,7 +878,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <input
                     type="text"
                     required
-                    value={newBusiness?.sales_person}
+                    value={newBusiness?.sales_person ?? ''}
                     onChange={(e) => setNewBusiness({...newBusiness, sales_person: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                     placeholder="ระบุชื่อผู้ติดต่อ"
@@ -817,7 +892,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <input
                     type="email"
                     required
-                    value={newBusiness?.email}
+                    value={newBusiness?.email ?? ''}
                     onChange={(e) => setNewBusiness({...newBusiness, email: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                     placeholder="contact@company.com"
@@ -831,7 +906,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </label>
                 <input
                   type="tel"
-                  value={newBusiness?.telephone}
+                  value={newBusiness?.telephone ?? ''}
                   onChange={(e) => setNewBusiness({...newBusiness, telephone: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="081-234-5678"
@@ -840,28 +915,94 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ที่อยู่
+                  ที่อยู่ (ถนน / เลขที่)
                 </label>
                 <input
                   type="text"
-                  value={newBusiness?.address}
+                  value={newBusiness?.address ?? ''}
                   onChange={(e) => setNewBusiness({...newBusiness, address: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="ระบุที่อยู่"
                 />
               </div>
 
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   จังหวัด
                 </label>
-                <input
-                  type="text"
-                  value={newBusiness?.city}
-                  onChange={(e) => setNewBusiness({...newBusiness, city: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                  placeholder="ระบุจังหวัด"
+                <Select
+                  isClearable
+                  value={
+                    newBusiness?.province
+                      ? PROVINCE_SELECT_OPTIONS.find((p) => p.value === newBusiness.province) ?? null
+                      : null
+                  }
+                  onChange={(selected) =>
+                    setNewBusiness({
+                      ...newBusiness,
+                      province: selected?.value ?? null,
+                      city: selected?.label ?? '',
+                      district: null,
+                      subDistrict: null,
+                    })
+                  }
+                  options={PROVINCE_SELECT_OPTIONS}
+                  placeholder="เลือกจังหวัด"
+                  className="w-full"
+                  classNamePrefix="react-select"
+                  styles={locationSelectStyles}
                 />
+              </div>
+
+              <div className="flex gap-6">
+                <div className="w-full md:w-1/2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    อำเภอ/เขต
+                  </label>
+                  <Select
+                    isClearable
+                    isDisabled={!newBusiness?.province}
+                    value={findDistrictOption(newBusiness?.district, newBusiness?.province)}
+                    onChange={(selected) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        district: selected?.value ?? null,
+                        subDistrict: null,
+                      })
+                    }
+                    options={getDistrictOptions(newBusiness?.province)}
+                    placeholder={newBusiness?.province ? 'เลือกอำเภอ/เขต' : 'เลือกจังหวัดก่อน'}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                  />
+                </div>
+                <div className="w-full md:w-1/2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    ตำบล/แขวง
+                  </label>
+                  <Select
+                    isClearable
+                    isDisabled={!newBusiness?.district}
+                    value={findSubDistrictOption(
+                      newBusiness?.subDistrict,
+                      newBusiness?.district,
+                      newBusiness?.province,
+                    )}
+                    onChange={(selected) =>
+                      setNewBusiness({
+                        ...newBusiness,
+                        subDistrict: selected?.value ?? null,
+                      })
+                    }
+                    options={getSubDistrictOptions(newBusiness?.province, newBusiness?.district)}
+                    placeholder={newBusiness?.district ? 'เลือกตำบล/แขวง' : 'เลือกอำเภอ/เขตก่อน'}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                  />
+                </div>
               </div>
               
               <div className='flex gap-6'>
@@ -948,7 +1089,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </label>
                 <input
                   type="text"
-                  value={newBusiness?.remark}
+                  value={newBusiness?.remark ?? ''}
                   onChange={(e) => setNewBusiness({...newBusiness, remark: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="ระบุหมายเหตุ"
@@ -1071,31 +1212,96 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
               <div className='w-full'>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  ที่อยู่
+                  ที่อยู่ (ถนน / เลขที่)
                 </label>
                 <input
                   type="text"
-                  value={editBusiness.address}
-                  onChange={(e) => setEditBusiness({...editBusiness, address: e.target.value})}
+                  value={editBusiness.streetAddress}
+                  onChange={(e) => setEditBusiness({...editBusiness, streetAddress: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
                   placeholder="ระบุที่อยู่"
                 />
               </div>
 
-              <div className='flex gap-6'>
-                <div className='w-full md:w-1/2'>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  จังหวัด
+                </label>
+                <Select
+                  isClearable
+                  value={
+                    editBusiness?.province
+                      ? PROVINCE_SELECT_OPTIONS.find((p) => p.value === editBusiness.province) ?? null
+                      : null
+                  }
+                  onChange={(selected) =>
+                    setEditBusiness({
+                      ...editBusiness,
+                      province: selected?.value ?? null,
+                      city: selected?.label ?? '',
+                      district: null,
+                      subDistrict: null,
+                    })
+                  }
+                  options={PROVINCE_SELECT_OPTIONS}
+                  placeholder="เลือกจังหวัด"
+                  className="w-full"
+                  classNamePrefix="react-select"
+                  styles={locationSelectStyles}
+                />
+              </div>
+
+              <div className="flex gap-6">
+                <div className="w-full md:w-1/2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    จังหวัด
+                    อำเภอ/เขต
                   </label>
-                  <input
-                    type="text"
-                    value={editBusiness.city}
-                    onChange={(e) => setEditBusiness({...editBusiness, city: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="ระบุจังหวัด"
+                  <Select
+                    isClearable
+                    isDisabled={!editBusiness?.province}
+                    value={findDistrictOption(editBusiness?.district, editBusiness?.province)}
+                    onChange={(selected) =>
+                      setEditBusiness({
+                        ...editBusiness,
+                        district: selected?.value ?? null,
+                        subDistrict: null,
+                      })
+                    }
+                    options={getDistrictOptions(editBusiness?.province)}
+                    placeholder={editBusiness?.province ? 'เลือกอำเภอ/เขต' : 'เลือกจังหวัดก่อน'}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
                   />
                 </div>
+                <div className="w-full md:w-1/2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    ตำบล/แขวง
+                  </label>
+                  <Select
+                    isClearable
+                    isDisabled={!editBusiness?.district}
+                    value={findSubDistrictOption(
+                      editBusiness?.subDistrict,
+                      editBusiness?.district,
+                      editBusiness?.province,
+                    )}
+                    onChange={(selected) =>
+                      setEditBusiness({
+                        ...editBusiness,
+                        subDistrict: selected?.value ?? null,
+                      })
+                    }
+                    options={getSubDistrictOptions(editBusiness?.province, editBusiness?.district)}
+                    placeholder={editBusiness?.district ? 'เลือกตำบล/แขวง' : 'เลือกอำเภอ/เขตก่อน'}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                  />
+                </div>
+              </div>
 
+              <div className='flex gap-6'>
                 <div className='w-full md:w-1/2'>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     ประเภท <span className="text-red-500">*</span>
