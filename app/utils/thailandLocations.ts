@@ -1,5 +1,5 @@
 import districtsData from './districts.json';
-import subDistrictsData from './subDistricts.json';
+import subDistrictsData from './subdistricts.json';
 
 export type LocationSelectOption = { value: number; label: string };
 
