@@ -5,7 +5,7 @@ const baseSegment = (process.env.NEXT_PUBLIC_BASE_PATH || '')
 const basePath = baseSegment ? `/${baseSegment}` : '';
 
 const supplierApiBase = (
-  process.env.SUPPLIER_API_BASE_URL || 'https://aswinno.assetwise.co.th/APIUAT'
+  process.env.SUPPLIER_API_BASE_URL || 'https://api.assetwise.co.th/api'
 )
   .trim()
   .replace(/\/+$/, '');

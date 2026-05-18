@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, FileText, FileSpreadsheet, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Supplier } from '../utils/types';
+import { THAILAND_PROVINCES } from '../utils/thailandProvinces';
 import { getApiHeaders, createApiUrl } from '../utils/api';
 import { publicAssetPath } from '../utils/assets';
 import AlertPopup from './AlertPopup';
@@ -354,6 +355,15 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
       const typeValue = typeIndex >= 0 ? (row[headers[typeIndex]] as string) || '' : '';
       const type_name = typeValue.trim(); // Just clean up whitespace
       const type_id = supplierTypeList.find(type => type.name === type_name)?.id || 0;
+      const cityText = cityIndex >= 0 ? String(row[headers[cityIndex]] ?? '').trim() : '';
+      const matchedProvince = cityText
+        ? THAILAND_PROVINCES.find(
+            (p) =>
+              p.name === cityText ||
+              p.name.includes(cityText) ||
+              cityText.includes(p.name),
+          )
+        : undefined;
       
       const supplier: Supplier = {
         uid: `supplier_${Date.now()}_${index}`, // Generate unique ID
@@ -366,7 +376,10 @@ function CsvUploadDialog({ onClose }: CsvUploadDialogProps) {
         update_time: new Date().toISOString(),
         is_active: true, // Default to active
         address: streetIndex >= 0 ? (row[headers[streetIndex]] as string) || '' : '',
-        city: cityIndex >= 0 ? (row[headers[cityIndex]] as string) || '' : '',
+        city: cityText,
+        province: matchedProvince?.id ?? null,
+        district: null,
+        subDistrict: null,
         sales_person: salesPersonIndex >= 0 ? (row[headers[salesPersonIndex]] as string) || '' : '',
         telephone: telephoneIndex >= 0 ? (row[headers[telephoneIndex]] as string) || '' : '',
         head_count: headCountIndex >= 0 ? parseInt((row[headers[headCountIndex]] as string) || '0') || 0 : 0, // Default value since we don't have head_count in required columns

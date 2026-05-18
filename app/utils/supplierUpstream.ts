@@ -3,7 +3,7 @@
  * Override with SUPPLIER_API_BASE_URL in .env (no trailing slash).
  */
 export function getSupplierApiBaseUrl(): string {
-  return (process.env.SUPPLIER_API_BASE_URL || 'https://aswinno.assetwise.co.th/APIUAT').replace(
+  return (process.env.SUPPLIER_API_BASE_URL || 'https://api.assetwise.co.th/api').replace(
     /\/+$/,
     '',
   );

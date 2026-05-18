@@ -6,6 +6,11 @@ interface DataResponse {
   Data: Supplier[];
 }
 
+export interface GetSupplierQuery {
+  supplier_name?: string;
+  is_active?: boolean;
+}
+
 interface UseGetDataResult {
   data: any[];
   loading: boolean;
@@ -13,14 +18,22 @@ interface UseGetDataResult {
   refetch: () => Promise<void>;
 }
 
-export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
+export const useGetData = (query: string | GetSupplierQuery = ''): UseGetDataResult => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const supplierName = typeof query === 'string' ? query : (query.supplier_name ?? '');
+  const isActive = typeof query === 'string' ? undefined : query.is_active;
+
   const fetchData = async () => {
     const urlencoded = new URLSearchParams();
-    urlencoded.append('supplier_name', '');
+    urlencoded.append('supplier_name', supplierName);
+    if (isActive === true) {
+      urlencoded.append('is_active', 'true');
+    } else if (isActive === false) {
+      urlencoded.append('is_active', 'false');
+    }
 
     try {
       setLoading(true);
@@ -50,7 +63,7 @@ export const useGetData = (initialQuery: string = ''): UseGetDataResult => {
 
   useEffect(() => {
     fetchData();
-  }, [initialQuery]);
+  }, [supplierName, isActive]);
 
   return {
     data,
