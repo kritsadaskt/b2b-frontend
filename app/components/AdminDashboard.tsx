@@ -4,6 +4,13 @@ import { authService } from '../utils/auth';
 import { Supplier, Business } from '../utils/types';
 import { formatOptionalText, formatSupplierAddress } from '../utils/supplierAddress';
 import { PROVINCE_SELECT_OPTIONS } from '../utils/thailandProvinces';
+import {
+  findDistrictOption,
+  findSubDistrictOption,
+  getDistrictOptions,
+  getSubDistrictOptions,
+  locationSelectStyles,
+} from '../utils/thailandLocations';
 import { useGetData, useGetSupplierMediaTypeList, useGetSupplierStatusList, useGetSupplierTypeList, useGetApiLeads } from '../hooks/getData';
 import Select from 'react-select';
 import { useSaveData } from '../hooks/saveData';
@@ -936,57 +943,64 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       ...newBusiness,
                       province: selected?.value ?? null,
                       city: selected?.label ?? '',
+                      district: null,
+                      subDistrict: null,
                     })
                   }
                   options={PROVINCE_SELECT_OPTIONS}
                   placeholder="เลือกจังหวัด"
                   className="w-full"
                   classNamePrefix="react-select"
-                  styles={{
-                    control: (provided) => ({
-                      ...provided,
-                      minHeight: '50px',
-                      borderRadius: '8px',
-                    }),
-                  }}
+                  styles={locationSelectStyles}
                 />
               </div>
 
               <div className="flex gap-6">
                 <div className="w-full md:w-1/2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    รหัสอำเภอ/เขต
+                    อำเภอ/เขต
                   </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newBusiness?.district ?? ''}
-                    onChange={(e) =>
+                  <Select
+                    isClearable
+                    isDisabled={!newBusiness?.province}
+                    value={findDistrictOption(newBusiness?.district, newBusiness?.province)}
+                    onChange={(selected) =>
                       setNewBusiness({
                         ...newBusiness,
-                        district: e.target.value ? Number(e.target.value) : null,
+                        district: selected?.value ?? null,
+                        subDistrict: null,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="รหัสจากระบบ"
+                    options={getDistrictOptions(newBusiness?.province)}
+                    placeholder={newBusiness?.province ? 'เลือกอำเภอ/เขต' : 'เลือกจังหวัดก่อน'}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
                   />
                 </div>
                 <div className="w-full md:w-1/2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    รหัสตำบล/แขวง
+                    ตำบล/แขวง
                   </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newBusiness?.subDistrict ?? ''}
-                    onChange={(e) =>
+                  <Select
+                    isClearable
+                    isDisabled={!newBusiness?.district}
+                    value={findSubDistrictOption(
+                      newBusiness?.subDistrict,
+                      newBusiness?.district,
+                      newBusiness?.province,
+                    )}
+                    onChange={(selected) =>
                       setNewBusiness({
                         ...newBusiness,
-                        subDistrict: e.target.value ? Number(e.target.value) : null,
+                        subDistrict: selected?.value ?? null,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="รหัสจากระบบ"
+                    options={getSubDistrictOptions(newBusiness?.province, newBusiness?.district)}
+                    placeholder={newBusiness?.district ? 'เลือกตำบล/แขวง' : 'เลือกอำเภอ/เขตก่อน'}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
                   />
                 </div>
               </div>
@@ -1225,57 +1239,64 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       ...editBusiness,
                       province: selected?.value ?? null,
                       city: selected?.label ?? '',
+                      district: null,
+                      subDistrict: null,
                     })
                   }
                   options={PROVINCE_SELECT_OPTIONS}
                   placeholder="เลือกจังหวัด"
                   className="w-full"
                   classNamePrefix="react-select"
-                  styles={{
-                    control: (provided) => ({
-                      ...provided,
-                      minHeight: '50px',
-                      borderRadius: '8px',
-                    }),
-                  }}
+                  styles={locationSelectStyles}
                 />
               </div>
 
               <div className="flex gap-6">
                 <div className="w-full md:w-1/2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    รหัสอำเภอ/เขต
+                    อำเภอ/เขต
                   </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={editBusiness?.district ?? ''}
-                    onChange={(e) =>
+                  <Select
+                    isClearable
+                    isDisabled={!editBusiness?.province}
+                    value={findDistrictOption(editBusiness?.district, editBusiness?.province)}
+                    onChange={(selected) =>
                       setEditBusiness({
                         ...editBusiness,
-                        district: e.target.value ? Number(e.target.value) : null,
+                        district: selected?.value ?? null,
+                        subDistrict: null,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="รหัสจากระบบ"
+                    options={getDistrictOptions(editBusiness?.province)}
+                    placeholder={editBusiness?.province ? 'เลือกอำเภอ/เขต' : 'เลือกจังหวัดก่อน'}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
                   />
                 </div>
                 <div className="w-full md:w-1/2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    รหัสตำบล/แขวง
+                    ตำบล/แขวง
                   </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={editBusiness?.subDistrict ?? ''}
-                    onChange={(e) =>
+                  <Select
+                    isClearable
+                    isDisabled={!editBusiness?.district}
+                    value={findSubDistrictOption(
+                      editBusiness?.subDistrict,
+                      editBusiness?.district,
+                      editBusiness?.province,
+                    )}
+                    onChange={(selected) =>
                       setEditBusiness({
                         ...editBusiness,
-                        subDistrict: e.target.value ? Number(e.target.value) : null,
+                        subDistrict: selected?.value ?? null,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-                    placeholder="รหัสจากระบบ"
+                    options={getSubDistrictOptions(editBusiness?.province, editBusiness?.district)}
+                    placeholder={editBusiness?.district ? 'เลือกตำบล/แขวง' : 'เลือกอำเภอ/เขตก่อน'}
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
                   />
                 </div>
               </div>
