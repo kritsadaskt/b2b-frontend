@@ -11,6 +11,7 @@ import {
   getSubDistrictOptions,
   locationSelectStyles,
 } from '../utils/thailandLocations';
+import type { SupplierTypeItem } from '../utils/supplierTypeCache';
 import { useGetData, useGetSupplierMediaTypeList, useGetSupplierStatusList, useGetSupplierTypeList, useGetApiLeads } from '../hooks/getData';
 import Select from 'react-select';
 import { useSaveData } from '../hooks/saveData';
@@ -73,6 +74,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilterId, setTypeFilterId] = useState<number | null>(null);
   const [activeView, setActiveView] = useState<'businesses' | 'leads'>('businesses');
   const [newBusiness, setNewBusiness] = useState<Supplier>({
     uid: '',
@@ -133,16 +135,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     is_active: true,
   });
   const { data: leadsData, loading: loadingLeads, error: errorLeads, refetch: refetchLeads } = useGetApiLeads();
-  //const { data: supplierTypeList, loading: loadingSupplierTypeList, error: errorSupplierTypeList, refetch: refetchSupplierTypeList } = useGetSupplierTypeList();
-  const supplierTypeList = [
-    { id: 1, name: 'Bank' },
-    { id: 2, name: 'องค์กร' },
-    { id: 3, name: 'ASW Partner' },
-    { id: 4, name: 'sponsor' },
-    { id: 5, name: 'other' },
-    { id: 6, name: 'สถานศึกษา' },
-    { id: 7, name: 'หน่วยงานราชการ' }
-  ]
+  const {
+    data: supplierTypeList = [],
+    loading: loadingSupplierTypeList,
+  } = useGetSupplierTypeList() as { data: SupplierTypeItem[]; loading: boolean };
   const { data: supplierMediaTypeList, loading: loadingSupplierMediaTypeList, error: errorSupplierMediaTypeList, refetch: refetchSupplierMediaTypeList } = useGetSupplierMediaTypeList();
   const saveDataResult = useSaveData(newBusiness);
   const updateDataResult = useSaveData({
@@ -344,7 +340,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   };
 
   const filteredBusinesses = businesses.filter((business) => {
+    if (typeFilterId != null && business.type_id !== typeFilterId) {
+      return false;
+    }
     const q = searchTerm.toLowerCase();
+    if (!q) return true;
     return (
       business.companyName.toLowerCase().includes(q) ||
       business.contactName.toLowerCase().includes(q) ||
@@ -353,6 +353,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   });
 
+  const supplierTypeFilterOptions = supplierTypeList.map((type) => ({
+    value: type.id,
+    label: type.name,
+  }));
+
   // Pagination calculations
   const totalItems = filteredBusinesses.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -360,10 +365,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredBusinesses.slice(startIndex, endIndex);
 
-  // Reset to first page when search term changes
+  // Reset to first page when search or type filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, typeFilterId]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -558,17 +563,41 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           )}
         </div>
 
-        {/* Search Bar and Export Button */}
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="ค้นหา..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
-            />
+        {/* Search Bar, Type Filter, and Export Button */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-1 flex-wrap items-center gap-4 min-w-0">
+            <div className="relative max-w-md flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="ค้นหา..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
+              />
+            </div>
+            {activeView === 'businesses' && (
+              <div className="w-full sm:w-56 min-w-[200px]">
+                <Select
+                  isClearable
+                  isLoading={loadingSupplierTypeList}
+                  value={
+                    typeFilterId != null
+                      ? supplierTypeFilterOptions.find((o) => o.value === typeFilterId) ?? null
+                      : null
+                  }
+                  onChange={(selected) => setTypeFilterId(selected?.value ?? null)}
+                  options={supplierTypeFilterOptions}
+                  placeholder="ประเภท"
+                  className="w-full"
+                  classNamePrefix="react-select"
+                  styles={locationSelectStyles}
+                  noOptionsMessage={() =>
+                    loadingSupplierTypeList ? 'กำลังโหลด...' : 'ไม่พบข้อมูล'
+                  }
+                />
+              </div>
+            )}
           </div>
           <button
             onClick={activeView === 'businesses' ? handleExportBusinesses : handleExportLeads}
@@ -630,7 +659,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   {currentItems.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                        {searchTerm ? 'ไม่พบข้อมูลบริษัทที่ตรงกับค้นหา' : 'ไม่พบข้อมูลบริษัท'}
+                        {searchTerm || typeFilterId != null
+                          ? 'ไม่พบข้อมูลบริษัทที่ตรงกับตัวกรอง'
+                          : 'ไม่พบข้อมูลบริษัท'}
                       </td>
                     </tr>
                   ) : (

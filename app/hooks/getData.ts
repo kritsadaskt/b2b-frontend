@@ -1,6 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Supplier, B2bLeadResponse } from '../utils/types';
 import { createApiUrl, getApiHeaders } from '../utils/api';
+import {
+  fetchSupplierTypeList,
+  getCachedSupplierTypes,
+  type SupplierTypeItem,
+} from '../utils/supplierTypeCache';
 
 interface DataResponse {
   Data: Supplier[];
@@ -74,50 +79,54 @@ export const useGetData = (query: string | GetSupplierQuery = ''): UseGetDataRes
 };
 
 interface UseGetSupplierTypeListResult {
-  data: any[];
+  data: SupplierTypeItem[] | string[];
   loading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: (force?: boolean) => Promise<void>;
 }
 
-export const useGetSupplierTypeList = (returnOnlyName: boolean = false): UseGetSupplierTypeListResult => {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+export const useGetSupplierTypeList = (
+  returnOnlyName: boolean = false,
+): UseGetSupplierTypeListResult => {
+  const cached = getCachedSupplierTypes();
+  const [data, setData] = useState<SupplierTypeItem[] | string[]>(() => {
+    if (!cached) return [];
+    return returnOnlyName ? cached.map((item) => item.name) : cached;
+  });
+  const [loading, setLoading] = useState(() => !cached);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(createApiUrl('Suplier/GetSuplierTypeList'), {
-        method: 'GET',
-        headers: {
-          ...getApiHeaders(),
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
+  const fetchData = useCallback(
+    async (force = false) => {
+      try {
+        if (!force && getCachedSupplierTypes()) {
+          const types = getCachedSupplierTypes()!;
+          setData(returnOnlyName ? types.map((item) => item.name) : types);
+          setError(null);
+          return;
+        }
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch supplier type list: ${response.status} ${response.statusText}`);
+        setLoading(true);
+        const types = await fetchSupplierTypeList({ force });
+        setData(returnOnlyName ? types.map((item) => item.name) : types);
+        setError(null);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while fetching supplier type list',
+        );
+        console.error('Error fetching supplier type list:', err);
+      } finally {
+        setLoading(false);
       }
-
-      const result = await response.json();
-      if (returnOnlyName) {
-        setData((result.Data || []).map((item: any) => item.supplier_name));
-      } else {
-        setData(result.Data || []);
-      }
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while fetching supplier type list');
-      console.error('Error fetching supplier type list:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [returnOnlyName],
+  );
 
   useEffect(() => {
     fetchData();
-  }, [returnOnlyName]);
+  }, [fetchData]);
 
   return {
     data,
