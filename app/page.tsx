@@ -279,12 +279,13 @@ export default function HomePage() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg p-8">
-            <form onSubmit={handleBusinessSubmit} className="space-y-6">
+            <form name="partnerForm" onSubmit={handleBusinessSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">ชื่อบริษัท *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">ชื่อบริษัท <span className="text-red-500">*</span></label>
                   <input
                     type="text"
+                    name="companyName"
                     required
                     value={businessForm.companyName}
                     onChange={(e) => setBusinessForm({ ...businessForm, companyName: e.target.value })}
@@ -293,10 +294,11 @@ export default function HomePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">ชื่อผู้ติดต่อ *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">ชื่อผู้ติดต่อ <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     required
+                    name="contactName"
                     value={businessForm.contactName}
                     onChange={(e) => setBusinessForm({ ...businessForm, contactName: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
@@ -307,10 +309,11 @@ export default function HomePage() {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">อีเมล *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">อีเมล <span className="text-red-500">*</span></label>
                   <input
                     type="email"
                     required
+                    name="email"
                     value={businessForm.email}
                     onChange={(e) => setBusinessForm({ ...businessForm, email: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
@@ -318,9 +321,12 @@ export default function HomePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">หมายเลขโทรศัพท์</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">หมายเลขโทรศัพท์ <span className="text-red-500">*</span></label>
                   <input
                     type="tel"
+                    pattern="^0[0-9]{9}$"
+                    required
+                    name="phone"
                     value={businessForm.phone}
                     onChange={(e) => setBusinessForm({ ...businessForm, phone: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#123F6D] focus:border-transparent"
