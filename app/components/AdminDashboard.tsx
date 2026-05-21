@@ -75,6 +75,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilterId, setTypeFilterId] = useState<number | null>(null);
+  const [provinceFilterId, setProvinceFilterId] = useState<number | null>(null);
+  const [districtFilterId, setDistrictFilterId] = useState<number | null>(null);
   const [activeView, setActiveView] = useState<'businesses' | 'leads'>('businesses');
   const [newBusiness, setNewBusiness] = useState<Supplier>({
     uid: '',
@@ -343,6 +345,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     if (typeFilterId != null && business.type_id !== typeFilterId) {
       return false;
     }
+    if (provinceFilterId != null && business.province !== provinceFilterId) {
+      return false;
+    }
+    if (districtFilterId != null && business.district !== districtFilterId) {
+      return false;
+    }
     const q = searchTerm.toLowerCase();
     if (!q) return true;
     return (
@@ -358,6 +366,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     label: type.name,
   }));
 
+  const districtFilterOptions = getDistrictOptions(provinceFilterId);
+
   // Pagination calculations
   const totalItems = filteredBusinesses.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -365,10 +375,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredBusinesses.slice(startIndex, endIndex);
 
-  // Reset to first page when search or type filter changes
+  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, typeFilterId]);
+  }, [searchTerm, typeFilterId, provinceFilterId, districtFilterId]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -577,26 +587,62 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               />
             </div>
             {activeView === 'businesses' && (
-              <div className="w-full sm:w-56 min-w-[200px]">
-                <Select
-                  isClearable
-                  isLoading={loadingSupplierTypeList}
-                  value={
-                    typeFilterId != null
-                      ? supplierTypeFilterOptions.find((o) => o.value === typeFilterId) ?? null
-                      : null
-                  }
-                  onChange={(selected) => setTypeFilterId(selected?.value ?? null)}
-                  options={supplierTypeFilterOptions}
-                  placeholder="ประเภท"
-                  className="w-full"
-                  classNamePrefix="react-select"
-                  styles={locationSelectStyles}
-                  noOptionsMessage={() =>
-                    loadingSupplierTypeList ? 'กำลังโหลด...' : 'ไม่พบข้อมูล'
-                  }
-                />
-              </div>
+              <>
+                <div className="w-full sm:w-56 min-w-[200px]">
+                  <Select
+                    isClearable
+                    isLoading={loadingSupplierTypeList}
+                    value={
+                      typeFilterId != null
+                        ? supplierTypeFilterOptions.find((o) => o.value === typeFilterId) ?? null
+                        : null
+                    }
+                    onChange={(selected) => setTypeFilterId(selected?.value ?? null)}
+                    options={supplierTypeFilterOptions}
+                    placeholder="ประเภท"
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                    noOptionsMessage={() =>
+                      loadingSupplierTypeList ? 'กำลังโหลด...' : 'ไม่พบข้อมูล'
+                    }
+                  />
+                </div>
+                <div className="w-full sm:w-56 min-w-[200px]">
+                  <Select
+                    isClearable
+                    value={
+                      provinceFilterId != null
+                        ? PROVINCE_SELECT_OPTIONS.find((o) => o.value === provinceFilterId) ?? null
+                        : null
+                    }
+                    onChange={(selected) => {
+                      setProvinceFilterId(selected?.value ?? null);
+                      setDistrictFilterId(null);
+                    }}
+                    options={PROVINCE_SELECT_OPTIONS}
+                    placeholder="จังหวัด"
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                  />
+                </div>
+                <div className="w-full sm:w-56 min-w-[200px]">
+                  <Select
+                    isClearable
+                    isDisabled={provinceFilterId == null}
+                    value={findDistrictOption(districtFilterId, provinceFilterId)}
+                    onChange={(selected) => setDistrictFilterId(selected?.value ?? null)}
+                    options={districtFilterOptions}
+                    placeholder={
+                      provinceFilterId != null ? 'เขต/อำเภอ' : 'เลือกจังหวัดก่อน'
+                    }
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                  />
+                </div>
+              </>
             )}
           </div>
           <button
@@ -659,7 +705,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   {currentItems.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                        {searchTerm || typeFilterId != null
+                        {searchTerm ||
+                        typeFilterId != null ||
+                        provinceFilterId != null ||
+                        districtFilterId != null
                           ? 'ไม่พบข้อมูลบริษัทที่ตรงกับตัวกรอง'
                           : 'ไม่พบข้อมูลบริษัท'}
                       </td>
