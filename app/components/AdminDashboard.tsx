@@ -75,6 +75,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilterId, setTypeFilterId] = useState<number | null>(null);
+  const [provinceFilterId, setProvinceFilterId] = useState<number | null>(null);
+  const [districtFilterId, setDistrictFilterId] = useState<number | null>(null);
+  const [mediaFilterIds, setMediaFilterIds] = useState<number[]>([]);
   const [activeView, setActiveView] = useState<'businesses' | 'leads'>('businesses');
   const [newBusiness, setNewBusiness] = useState<Supplier>({
     uid: '',
@@ -197,8 +200,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const fetchBusinesses = async () => {
     try {
-      console.log(bussinessData);
-
+      // console.log(bussinessData);
       // Transform API data to match our interface
       const transformedData = Array.isArray(bussinessData) ? [...bussinessData]
         .filter((item: Supplier) => item.is_active === true)
@@ -343,6 +345,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     if (typeFilterId != null && business.type_id !== typeFilterId) {
       return false;
     }
+    if (provinceFilterId != null && business.province !== provinceFilterId) {
+      return false;
+    }
+    if (districtFilterId != null && business.district !== districtFilterId) {
+      return false;
+    }
+    if (mediaFilterIds.length > 0) {
+      const businessMediaIds = business.MediaList?.map((m) => m.id) ?? [];
+      const hasSelectedMedia = mediaFilterIds.some((id) => businessMediaIds.includes(id));
+      if (!hasSelectedMedia) return false;
+    }
     const q = searchTerm.toLowerCase();
     if (!q) return true;
     return (
@@ -358,6 +371,13 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     label: type.name,
   }));
 
+  const districtFilterOptions = getDistrictOptions(provinceFilterId);
+
+  const mediaFilterOptions = supplierMediaTypeList.map((type) => ({
+    value: type.id,
+    label: type.name,
+  }));
+
   // Pagination calculations
   const totalItems = filteredBusinesses.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -365,10 +385,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const endIndex = startIndex + itemsPerPage;
   const currentItems = filteredBusinesses.slice(startIndex, endIndex);
 
-  // Reset to first page when search or type filter changes
+  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, typeFilterId]);
+  }, [searchTerm, typeFilterId, provinceFilterId, districtFilterId, mediaFilterIds]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -518,7 +538,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         {/* Page Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-[#123F6D]">
+            <h2 className="lg:text-3xl text-2xl font-bold text-[#123F6D]">
               {activeView === 'businesses' ? 'ระบบจัดการข้อมูลบริษัท' : 'ข้อมูลผู้สนใจ (Leads)'}
             </h2>
           </div>
@@ -564,9 +584,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         </div>
 
         {/* Search Bar, Type Filter, and Export Button */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="mb-6 flex flex-col lg:flex-row flex-wrap items-start justify-between gap-4">
           <div className="flex flex-1 flex-wrap items-center gap-4 min-w-0">
-            <div className="relative max-w-md flex-1 min-w-[200px]">
+            <div className="relative w-full lg:w-1/3">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
@@ -577,26 +597,83 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               />
             </div>
             {activeView === 'businesses' && (
-              <div className="w-full sm:w-56 min-w-[200px]">
-                <Select
-                  isClearable
-                  isLoading={loadingSupplierTypeList}
-                  value={
-                    typeFilterId != null
-                      ? supplierTypeFilterOptions.find((o) => o.value === typeFilterId) ?? null
-                      : null
-                  }
-                  onChange={(selected) => setTypeFilterId(selected?.value ?? null)}
-                  options={supplierTypeFilterOptions}
-                  placeholder="ประเภท"
-                  className="w-full"
-                  classNamePrefix="react-select"
-                  styles={locationSelectStyles}
-                  noOptionsMessage={() =>
-                    loadingSupplierTypeList ? 'กำลังโหลด...' : 'ไม่พบข้อมูล'
-                  }
-                />
-              </div>
+              <>
+                
+                <div className="w-full sm:w-56 min-w-[150px]">
+                  <Select
+                    isClearable
+                    value={
+                      provinceFilterId != null
+                        ? PROVINCE_SELECT_OPTIONS.find((o) => o.value === provinceFilterId) ?? null
+                        : null
+                    }
+                    onChange={(selected) => {
+                      setProvinceFilterId(selected?.value ?? null);
+                      setDistrictFilterId(null);
+                    }}
+                    options={PROVINCE_SELECT_OPTIONS}
+                    placeholder="จังหวัด"
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                  />
+                </div>
+                <div className="w-full sm:w-56 min-w-[150px]">
+                  <Select
+                    isClearable
+                    isDisabled={provinceFilterId == null}
+                    value={findDistrictOption(districtFilterId, provinceFilterId)}
+                    onChange={(selected) => setDistrictFilterId(selected?.value ?? null)}
+                    options={districtFilterOptions}
+                    placeholder={
+                      provinceFilterId != null ? 'เขต/อำเภอ' : 'เลือกจังหวัดก่อน'
+                    }
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                  />
+                </div>
+                <div className="w-full sm:w-56 min-w-[150px]">
+                  <Select
+                    isClearable
+                    isLoading={loadingSupplierTypeList}
+                    value={
+                      typeFilterId != null
+                        ? supplierTypeFilterOptions.find((o) => o.value === typeFilterId) ?? null
+                        : null
+                    }
+                    onChange={(selected) => setTypeFilterId(selected?.value ?? null)}
+                    options={supplierTypeFilterOptions}
+                    placeholder="ประเภท"
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                    noOptionsMessage={() =>
+                      loadingSupplierTypeList ? 'กำลังโหลด...' : 'ไม่พบข้อมูล'
+                    }
+                  />
+                </div>
+                <div className="w-full sm:w-64 min-w-[150px]">
+                  <Select
+                    isMulti
+                    isClearable
+                    closeMenuOnSelect={false}
+                    isLoading={loadingSupplierMediaTypeList}
+                    value={mediaFilterOptions.filter((o) => mediaFilterIds.includes(o.value))}
+                    onChange={(selected) =>
+                      setMediaFilterIds(selected ? selected.map((o) => o.value) : [])
+                    }
+                    options={mediaFilterOptions}
+                    placeholder="สื่อ"
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
+                    noOptionsMessage={() =>
+                      loadingSupplierMediaTypeList ? 'กำลังโหลด...' : 'ไม่พบข้อมูล'
+                    }
+                  />
+                </div>
+              </>
             )}
           </div>
           <button
@@ -635,6 +712,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="p-3 text-center  text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px]">
+                      แก้ไข
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       ชื่อบริษัท
                     </th>
@@ -648,18 +728,20 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       เบอร์โทรศัพท์
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      จำนวนพนักงาน
+                      สื่อ
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      จัดการ
-                    </th>
+                    
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                        {searchTerm || typeFilterId != null
+                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                        {searchTerm ||
+                        typeFilterId != null ||
+                        provinceFilterId != null ||
+                        districtFilterId != null ||
+                        mediaFilterIds.length > 0
                           ? 'ไม่พบข้อมูลบริษัทที่ตรงกับตัวกรอง'
                           : 'ไม่พบข้อมูลบริษัท'}
                       </td>
@@ -667,6 +749,15 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   ) : (
                     currentItems.map((business) => (
                       <tr key={business.uid} className="hover:bg-gray-50">
+                        <td className="p-3 whitespace-nowrap">
+                          <button onClick={() => {
+                            setShowEditModal(true);
+                            setEditBusiness(business);
+                            //console.log(business);
+                          }} className="px-4 py-2 text-accent rounded-full hover:bg-gray-200 font-semibold transition-all duration-300">
+                            <SquarePen className="h-5 w-5" />
+                          </button>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <Building2 className="h-5 w-5 text-[#123F6D] mr-3" />
@@ -684,18 +775,25 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <CopyableText value={business.phone} />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{business.employees}</div>
+                        <td className="px-6 py-4 min-w-[300px]">
+                          <div className="flex flex-wrap gap-1.5">
+                            {business.MediaList?.length ? (
+                              business.MediaList.map((media) => (
+                                <span
+                                  key={media.id}
+                                  className="inline-flex items-center rounded bg-[#123F6D]/10 px-2.5 py-0.5 font-medium text-xs text-[#123F6D]"
+                                >
+                                  {media.name}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-400" style={{ fontSize: '20px' }}>
+                                —
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button onClick={() => {
-                            setShowEditModal(true);
-                            setEditBusiness(business);
-                            //console.log(business);
-                          }} className="px-4 py-2 text-accent rounded-full hover:bg-gray-200 font-semibold transition-all duration-300">
-                            <SquarePen className="h-5 w-5" />
-                          </button>
-                        </td>
+                        
                       </tr>
                     ))
                   )}
@@ -706,7 +804,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           
           {/* Pagination */}
           {!loadingData && !error && !errorData && totalItems > 0 && (
-            <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="bg-white px-6 py-4 border-t border-gray-200 flex flex-col lg:flex-row items-center justify-between gap-4">
               {/* Items per page and info */}
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
@@ -722,11 +820,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-                  <span className="text-sm text-gray-700">รายการต่อหน้า</span>
+                  <span className="hidden lg:block text-sm text-gray-700">รายการต่อหน้า</span>
                 </div>
                 <div className="text-sm text-gray-700">
-                  แสดง {startIndex + 1} ถึง {Math.min(endIndex, totalItems)} จาก {totalItems} รายการ
-                  {searchTerm && ` (กรองจากการค้นหา "${searchTerm}")`}
+                  แสดง {startIndex + 1} ถึง {Math.min(endIndex, totalItems)} จาก {totalItems} <span className="hidden lg:inline">รายการ</span>
+                  {searchTerm && ` <span className="hidden lg:inline">(กรองจากการค้นหา "${searchTerm}")</span>`}
                 </div>
               </div>
               
