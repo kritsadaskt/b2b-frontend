@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload, ChevronLeft, ChevronRight, Users, Download } from 'lucide-react';
 import { authService } from '../utils/auth';
-import { Supplier, Business } from '../utils/types';
+import { Supplier, Business, B2bLeadResponse } from '../utils/types';
 import { formatOptionalText, formatSupplierAddress } from '../utils/supplierAddress';
 import { PROVINCE_SELECT_OPTIONS } from '../utils/thailandProvinces';
 import {
@@ -27,6 +27,22 @@ interface DataResponse {
 
 interface AdminDashboardProps {
   onLogout: () => void;
+}
+
+type PartnerSortOption = 'name_asc' | 'name_desc' | 'created_desc' | 'created_asc';
+
+const PARTNER_SORT_OPTIONS: { value: PartnerSortOption; label: string }[] = [
+  { value: 'name_asc', label: 'ชื่อ A → Z' },
+  { value: 'name_desc', label: 'ชื่อ Z → A' },
+  { value: 'created_desc', label: 'วันที่สร้าง ใหม่ → เก่า' },
+  { value: 'created_asc', label: 'วันที่สร้าง เก่า → ใหม่' },
+];
+
+function isTestLead(lead: B2bLeadResponse): boolean {
+  const fname = (lead.Fname ?? '').trim().toLowerCase();
+  const lname = (lead.Lname ?? '').trim().toLowerCase();
+  const email = (lead.Email ?? '').trim().toLowerCase();
+  return fname === 'test' || lname === 'test' || email === 'test@test.com';
 }
 
 const NON_COPYABLE_VALUES = new Set(['—', 'N/A', '']);
@@ -78,6 +94,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [provinceFilterId, setProvinceFilterId] = useState<number | null>(null);
   const [districtFilterId, setDistrictFilterId] = useState<number | null>(null);
   const [mediaFilterIds, setMediaFilterIds] = useState<number[]>([]);
+  const [partnerSort, setPartnerSort] = useState<PartnerSortOption>('name_asc');
   const [activeView, setActiveView] = useState<'businesses' | 'leads'>('businesses');
   const [newBusiness, setNewBusiness] = useState<Supplier>({
     uid: '',
@@ -138,6 +155,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     is_active: true,
   });
   const { data: leadsData, loading: loadingLeads, error: errorLeads, refetch: refetchLeads } = useGetApiLeads();
+  const visibleLeads = useMemo(
+    () => leadsData.filter((lead) => !isTestLead(lead)),
+    [leadsData],
+  );
   const {
     data: supplierTypeList = [],
     loading: loadingSupplierTypeList,
@@ -204,11 +225,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       // Transform API data to match our interface
       const transformedData = Array.isArray(bussinessData) ? [...bussinessData]
         .filter((item: Supplier) => item.is_active === true)
-        .sort((a, b) =>
-          (a.supplier_name ?? '').localeCompare(b.supplier_name ?? '', 'th', {
-            sensitivity: 'base',
-          }),
-        )
         .map((item: Supplier, index: number) => ({
           uid: item.uid || `business-${index}`,
           companyName: formatOptionalText(item.supplier_name),
@@ -378,17 +394,41 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     label: type.name,
   }));
 
+  const sortedBusinesses = useMemo(() => {
+    const list = [...filteredBusinesses];
+    switch (partnerSort) {
+      case 'name_asc':
+        return list.sort((a, b) =>
+          a.companyName.localeCompare(b.companyName, 'th', { sensitivity: 'base' }),
+        );
+      case 'name_desc':
+        return list.sort((a, b) =>
+          b.companyName.localeCompare(a.companyName, 'th', { sensitivity: 'base' }),
+        );
+      case 'created_desc':
+        return list.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+      case 'created_asc':
+        return list.sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
+      default:
+        return list;
+    }
+  }, [filteredBusinesses, partnerSort]);
+
   // Pagination calculations
-  const totalItems = filteredBusinesses.length;
+  const totalItems = sortedBusinesses.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentItems = filteredBusinesses.slice(startIndex, endIndex);
+  const currentItems = sortedBusinesses.slice(startIndex, endIndex);
 
-  // Reset to first page when filters change
+  // Reset to first page when filters or sort change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, typeFilterId, provinceFilterId, districtFilterId, mediaFilterIds]);
+  }, [searchTerm, typeFilterId, provinceFilterId, districtFilterId, mediaFilterIds, partnerSort]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -448,12 +488,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       { key: 'remark', label: 'remark' },
     ];
 
-    exportToCSV(filteredBusinesses, 'businesses', headers);
+    exportToCSV(sortedBusinesses, 'businesses', headers);
   };
 
   // Handle export for leads
   const handleExportLeads = () => {
-    const filteredLeads = leadsData.filter(lead => 
+    const filteredLeads = visibleLeads.filter(lead => 
       `${lead.Fname} ${lead.Lname}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.Email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.Tel?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -671,6 +711,19 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     noOptionsMessage={() =>
                       loadingSupplierMediaTypeList ? 'กำลังโหลด...' : 'ไม่พบข้อมูล'
                     }
+                  />
+                </div>
+                <div className="w-full sm:w-56 min-w-[150px]">
+                  <Select
+                    value={PARTNER_SORT_OPTIONS.find((o) => o.value === partnerSort) ?? PARTNER_SORT_OPTIONS[0]}
+                    onChange={(selected) =>
+                      setPartnerSort((selected?.value as PartnerSortOption) ?? 'name_asc')
+                    }
+                    options={PARTNER_SORT_OPTIONS}
+                    placeholder="เรียงลำดับ"
+                    className="w-full"
+                    classNamePrefix="react-select"
+                    styles={locationSelectStyles}
                   />
                 </div>
               </>
@@ -923,14 +976,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {leadsData.length === 0 ? (
+                    {visibleLeads.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                           ไม่มีข้อมูล Leads
                         </td>
                       </tr>
                     ) : (
-                      leadsData.map((lead) => (
+                      visibleLeads.map((lead) => (
                         <tr key={lead.uid} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
