@@ -2,7 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { LogOut, Plus, Building2, X, Search, SquarePen, ChevronDown, Upload, ChevronLeft, ChevronRight, Users, Download } from 'lucide-react';
 import { authService } from '../utils/auth';
 import { Supplier, Business, B2bLeadResponse } from '../utils/types';
-import { formatOptionalText, formatSupplierAddress } from '../utils/supplierAddress';
+import { formatOptionalText } from '../utils/supplierAddress';
+import { transformSuppliersToBusiness, filterPartners } from '../utils/partnerTransform';
+import { sortPartners, PARTNER_SORT_OPTIONS, type PartnerSortOption } from '../utils/partnerSort';
+import { exportToCSV } from '../utils/exportCsv';
+import CopyableText from './CopyableText';
 import { PROVINCE_SELECT_OPTIONS } from '../utils/thailandProvinces';
 import {
   findDistrictOption,
@@ -17,7 +21,6 @@ import Select from 'react-select';
 import { useSaveData } from '../hooks/saveData';
 import AlertPopup from './AlertPopup';
 import CsvUploadDialog from '../components/CsvUploadDialog';
-import { CopyIcon } from 'lucide-react';
 // import ApiTest from './ApiTest';
 // import FunctionTest from './FunctionTest';
 
@@ -29,59 +32,11 @@ interface AdminDashboardProps {
   onLogout: () => void;
 }
 
-type PartnerSortOption = 'name_asc' | 'name_desc' | 'created_desc' | 'created_asc';
-
-const PARTNER_SORT_OPTIONS: { value: PartnerSortOption; label: string }[] = [
-  { value: 'name_asc', label: 'ชื่อ A → Z' },
-  { value: 'name_desc', label: 'ชื่อ Z → A' },
-  { value: 'created_desc', label: 'วันที่สร้าง ใหม่ → เก่า' },
-  { value: 'created_asc', label: 'วันที่สร้าง เก่า → ใหม่' },
-];
-
 function isTestLead(lead: B2bLeadResponse): boolean {
   const fname = (lead.Fname ?? '').trim().toLowerCase();
   const lname = (lead.Lname ?? '').trim().toLowerCase();
   const email = (lead.Email ?? '').trim().toLowerCase();
   return fname === 'test' || lname === 'test' || email === 'test@test.com';
-}
-
-const NON_COPYABLE_VALUES = new Set(['—', 'N/A', '']);
-
-function CopyableText({ value, className = '' }: { value: string; className?: string }) {
-  const [copied, setCopied] = useState(false);
-  const trimmed = value.trim();
-  const canCopy = trimmed.length > 0 && !NON_COPYABLE_VALUES.has(trimmed);
-
-  const handleCopy = async () => {
-    if (!canCopy) return;
-    try {
-      await navigator.clipboard.writeText(trimmed);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
-  if (!canCopy) {
-    return <span className={`text-sm text-gray-900 ${className}`}>{value}</span>;
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className={`text-sm text-left transition-colors rounded px-0.5 -mx-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#123F6D] flex items-center gap-2 ${
-        copied
-          ? 'text-green-700 font-medium'
-          : 'text-gray-900 hover:text-[#123F6D]'
-      } ${className}`}
-      title={copied ? 'คัดลอกแล้ว' : 'คลิกเพื่อคัดลอก'}
-    >
-      {copied ? 'คัดลอกแล้ว' : value}
-      <CopyIcon className="h-3 w-3" />
-    </button>
-  );
 }
 
 export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
@@ -221,31 +176,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const fetchBusinesses = async () => {
     try {
-      // console.log(bussinessData);
-      // Transform API data to match our interface
-      const transformedData = Array.isArray(bussinessData) ? [...bussinessData]
-        .filter((item: Supplier) => item.is_active === true)
-        .map((item: Supplier, index: number) => ({
-          uid: item.uid || `business-${index}`,
-          companyName: formatOptionalText(item.supplier_name),
-          contactName: formatOptionalText(item.sales_person),
-          email: formatOptionalText(item.email),
-          fullAddress: formatSupplierAddress(item),
-          streetAddress: item.address?.trim() ?? '',
-          city: item.city?.trim() ?? '',
-          province: item.province ?? null,
-          district: item.district ?? null,
-          subDistrict: item.subDistrict ?? null,
-          remark: formatOptionalText(item.remark),
-          is_active: item.is_active === true,
-          phone: formatOptionalText(item.telephone),
-          employees: item.head_count != null ? String(item.head_count) : '—',
-          type_id: item.type_id || 0,
-          StatusList: item.StatusList || [],
-          createdAt: item.contact_date || new Date().toISOString(),
-          MediaList: item.MediaList || []
-        } as Business)) : [];
-      
+      const transformedData = transformSuppliersToBusiness(bussinessData);
       setBusinesses(transformedData);
       setError(null);
     } catch (err) {
@@ -357,29 +288,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const filteredBusinesses = businesses.filter((business) => {
-    if (typeFilterId != null && business.type_id !== typeFilterId) {
-      return false;
-    }
-    if (provinceFilterId != null && business.province !== provinceFilterId) {
-      return false;
-    }
-    if (districtFilterId != null && business.district !== districtFilterId) {
-      return false;
-    }
-    if (mediaFilterIds.length > 0) {
-      const businessMediaIds = business.MediaList?.map((m) => m.id) ?? [];
-      const hasSelectedMedia = mediaFilterIds.some((id) => businessMediaIds.includes(id));
-      if (!hasSelectedMedia) return false;
-    }
-    const q = searchTerm.toLowerCase();
-    if (!q) return true;
-    return (
-      business.companyName.toLowerCase().includes(q) ||
-      business.contactName.toLowerCase().includes(q) ||
-      business.email.toLowerCase().includes(q) ||
-      business.fullAddress.toLowerCase().includes(q)
-    );
+  const filteredBusinesses = filterPartners(businesses, {
+    searchTerm,
+    typeFilterId,
+    provinceFilterId,
+    districtFilterId,
+    mediaFilterIds,
   });
 
   const supplierTypeFilterOptions = supplierTypeList.map((type) => ({
@@ -394,29 +308,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     label: type.name,
   }));
 
-  const sortedBusinesses = useMemo(() => {
-    const list = [...filteredBusinesses];
-    switch (partnerSort) {
-      case 'name_asc':
-        return list.sort((a, b) =>
-          a.companyName.localeCompare(b.companyName, 'th', { sensitivity: 'base' }),
-        );
-      case 'name_desc':
-        return list.sort((a, b) =>
-          b.companyName.localeCompare(a.companyName, 'th', { sensitivity: 'base' }),
-        );
-      case 'created_desc':
-        return list.sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-      case 'created_asc':
-        return list.sort(
-          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-        );
-      default:
-        return list;
-    }
-  }, [filteredBusinesses, partnerSort]);
+  const sortedBusinesses = useMemo(
+    () => sortPartners(filteredBusinesses, partnerSort),
+    [filteredBusinesses, partnerSort],
+  );
 
   // Pagination calculations
   const totalItems = sortedBusinesses.length;
@@ -437,37 +332,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
-  };
-
-  // Export to CSV function
-  const exportToCSV = (data: any[], filename: string, headers: { key: string; label: string }[]) => {
-    // Build CSV header row
-    const headerRow = headers.map(h => h.label).join(',');
-    
-    // Build data rows
-    const dataRows = data.map(item => 
-      headers.map(h => {
-        let value = item[h.key];
-        // Handle arrays (like StatusList, MediaList)
-        if (Array.isArray(value)) {
-          value = value.map((v: any) => v.name || v).join('; ');
-        }
-        // Escape quotes and wrap in quotes if contains comma or quotes
-        if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
-          value = `"${value.replace(/"/g, '""')}"`;
-        }
-        return value ?? '';
-      }).join(',')
-    ).join('\n');
-    
-    // Create and download file with BOM for Thai characters
-    const csv = `\uFEFF${headerRow}\n${dataRows}`;
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
   };
 
   // Handle export for businesses
