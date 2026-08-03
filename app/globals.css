@@ -30,7 +30,3 @@
     background-image: var(--bg-steps-mobile);
   }
 }
-
-body {
-  filter: grayscale(50%);
-}
